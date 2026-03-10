@@ -132,14 +132,16 @@ const addEndpoint = (m: Awaited<ReturnType<typeof processModel>>) => ({
 	...m,
 	getEndpoint: async (): Promise<Endpoint> => {
 		if (!m.endpoints || m.endpoints.length === 0) {
-			throw new Error("No endpoints configured. This build requires OpenAI-compatible endpoints.");
+			throw new Error("No endpoints configured.");
 		}
-		// Only support OpenAI-compatible endpoints in this build
-		const endpoint = m.endpoints[0];
-		if (endpoint.type !== "openai") {
-			throw new Error("Only 'openai' endpoint type is supported in this build");
+		const endpoint = m.endpoints[0] as z.infer<typeof endpointSchema>;
+		if (endpoint.type === "openai") {
+			return await endpoints.openai({ ...endpoint, model: m });
+		} else if (endpoint.type === "dify") {
+			return await endpoints.dify({ ...endpoint, model: m });
+		} else {
+			throw new Error(`Unsupported endpoint type: ${(endpoint as any).type}`);
 		}
-		return await endpoints.openai({ ...endpoint, model: m });
 	},
 });
 
@@ -295,174 +297,55 @@ const applyModelState = (newModels: ProcessedModel[], startedAt: number): Models
 };
 
 const buildModels = async (): Promise<ProcessedModel[]> => {
-	if (!openaiBaseUrl) {
-		logger.error(
-			"OPENAI_BASE_URL is required. Set it to an OpenAI-compatible base (e.g., https://router.huggingface.co/v1)."
-		);
-		throw new Error("OPENAI_BASE_URL not set");
-	}
+	// Static model for IslamVibe AI using Dify endpoint
+	const modelRaw = {
+		id: "islamvibe-ai",
+		name: "IslamVibe AI",
+		displayName: "IslamVibe AI",
+		description: "Исламский AI ассистент на базе DeepSeek с RAG через Dify. Отвечает на вопросы об исламе, Коране, хадисах и исламской культуре.",
+		logoUrl: "https://img.icons8.com/color/96/000000/islam.png",
+		websiteUrl: "https://islamvibe.ai",
+		modelUrl: "https://dify.ai",
+		preprompt: "Ты - полезный исламский AI ассистент. Отвечай на вопросы уважительно, точно и с ссылками на источники, когда это возможно. Если не знаешь ответа, честно признайся.",
+		endpoints: [
+			{
+				type: "dify" as const,
+			},
+		],
+		parameters: {
+			temperature: 0.7,
+			max_tokens: 2000,
+			top_p: 0.9,
+		},
+		multimodal: false,
+		supportsTools: false,
+		unlisted: false,
+		systemRoleSupported: true,
+		promptExamples: [
+			{
+				title: "Объясни суру Аль-Фатиха",
+				prompt: "Объясни смысл и значение суры Аль-Фатиха из Корана.",
+			},
+			{
+				title: "Расскажи о пяти столпах ислама",
+				prompt: "Какие пять столпов ислама и что каждый из них означает?",
+			},
+			{
+				title: "Разница между сунной и хадисом",
+				prompt: "В чем разница между сунной и хадисом в исламе?",
+			},
+		],
+	} as ModelConfig;
 
-	try {
-		const baseURL = openaiBaseUrl;
-		logger.info({ baseURL }, "[models] Using OpenAI-compatible base URL");
+	const builtModel = await processModel(modelRaw)
+		.then(addEndpoint)
+		.then(async (m) => ({
+			...m,
+			hasInferenceAPI: false,
+			isRouter: false as boolean,
+		}));
 
-		// Canonical auth token is OPENAI_API_KEY; keep HF_TOKEN as legacy alias
-		const authToken = config.OPENAI_API_KEY || config.HF_TOKEN;
-
-		// Use auth token from the start if available to avoid rate limiting issues
-		// Some APIs rate-limit unauthenticated requests more aggressively
-		const response = await fetch(`${baseURL}/models`, {
-			headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
-		});
-		logger.info({ status: response.status }, "[models] First fetch status");
-		if (!response.ok && response.status === 401 && !authToken) {
-			// If we get 401 and didn't have a token, there's nothing we can do
-			throw new Error(
-				`Failed to fetch ${baseURL}/models: ${response.status} ${response.statusText} (no auth token available)`
-			);
-		}
-		if (!response.ok) {
-			throw new Error(
-				`Failed to fetch ${baseURL}/models: ${response.status} ${response.statusText}`
-			);
-		}
-		const json = await response.json();
-		logger.info({ keys: Object.keys(json || {}) }, "[models] Response keys");
-
-		const parsed = listSchema.parse(json);
-		logger.info({ count: parsed.data.length }, "[models] Parsed models count");
-
-		let modelsRaw = parsed.data.map((m) => {
-			let logoUrl: string | undefined = undefined;
-			if (isHFRouter && m.id.includes("/")) {
-				const org = m.id.split("/")[0];
-				logoUrl = `https://huggingface.co/api/avatars/${encodeURIComponent(org)}`;
-			}
-
-			const inputModalities = (m.architecture?.input_modalities ?? []).map((modality) =>
-				modality.toLowerCase()
-			);
-			const supportsImageInput =
-				inputModalities.includes("image") || inputModalities.includes("vision");
-
-			// If any provider supports tools, consider the model as supporting tools
-			const supportsTools = Boolean((m.providers ?? []).some((p) => p?.supports_tools === true));
-			return {
-				id: m.id,
-				name: m.id,
-				displayName: m.id,
-				description: m.description,
-				logoUrl,
-				providers: m.providers,
-				multimodal: supportsImageInput,
-				multimodalAcceptedMimetypes: supportsImageInput ? ["image/*"] : undefined,
-				supportsTools,
-				endpoints: [
-					{
-						type: "openai" as const,
-						baseURL,
-						// apiKey will be taken from OPENAI_API_KEY or HF_TOKEN automatically
-					},
-				],
-			} as ModelConfig;
-		}) as ModelConfig[];
-
-		const overrides = getModelOverrides();
-
-		if (overrides.length) {
-			const overrideMap = new Map<string, ModelOverride>();
-			for (const override of overrides) {
-				for (const key of [override.id, override.name]) {
-					const trimmed = key?.trim();
-					if (trimmed) overrideMap.set(trimmed, override);
-				}
-			}
-
-			modelsRaw = modelsRaw.map((model) => {
-				const override = overrideMap.get(model.id ?? "") ?? overrideMap.get(model.name ?? "");
-				if (!override) return model;
-
-				const { id, name, ...rest } = override;
-				void id;
-				void name;
-
-				return {
-					...model,
-					...rest,
-				};
-			});
-		}
-
-		const builtModels = await Promise.all(
-			modelsRaw.map((e) =>
-				processModel(e)
-					.then(addEndpoint)
-					.then(async (m) => ({
-						...m,
-						hasInferenceAPI: inferenceApiIds.includes(m.id ?? m.name),
-						// router decoration added later
-						isRouter: false as boolean,
-					}))
-			)
-		);
-
-		const archBase = (config.LLM_ROUTER_ARCH_BASE_URL || "").trim();
-		const routerLabel = (config.PUBLIC_LLM_ROUTER_DISPLAY_NAME || "Omni").trim() || "Omni";
-		const routerLogo = (config.PUBLIC_LLM_ROUTER_LOGO_URL || "").trim();
-		const routerAliasId = (config.PUBLIC_LLM_ROUTER_ALIAS_ID || "omni").trim() || "omni";
-		const routerMultimodalEnabled =
-			(config.LLM_ROUTER_ENABLE_MULTIMODAL || "").toLowerCase() === "true";
-		const routerToolsEnabled = (config.LLM_ROUTER_ENABLE_TOOLS || "").toLowerCase() === "true";
-
-		let decorated = builtModels as ProcessedModel[];
-
-		if (archBase) {
-			// Build a minimal model config for the alias
-			const aliasRaw = {
-				id: routerAliasId,
-				name: routerAliasId,
-				displayName: routerLabel,
-				description: "Automatically routes your messages to the best model for your request.",
-				logoUrl: routerLogo || undefined,
-				preprompt: "",
-				endpoints: [
-					{
-						type: "openai" as const,
-						baseURL: openaiBaseUrl,
-					},
-				],
-				// Keep the alias visible
-				unlisted: false,
-			} as ModelConfig;
-
-			if (routerMultimodalEnabled) {
-				aliasRaw.multimodal = true;
-				aliasRaw.multimodalAcceptedMimetypes = ["image/*"];
-			}
-
-			if (routerToolsEnabled) {
-				aliasRaw.supportsTools = true;
-			}
-
-			const aliasBase = await processModel(aliasRaw);
-			// Create a self-referential ProcessedModel for the router endpoint
-			const aliasModel: ProcessedModel = {
-				...aliasBase,
-				isRouter: true,
-				hasInferenceAPI: false,
-				// getEndpoint uses the router wrapper regardless of the endpoints array
-				getEndpoint: async (): Promise<Endpoint> => makeRouterEndpoint(aliasModel),
-			} as ProcessedModel;
-
-			// Put alias first
-			decorated = [aliasModel, ...decorated];
-		}
-
-		return decorated;
-	} catch (e) {
-		logger.error(e, "Failed to load models from OpenAI base URL");
-		throw e;
-	}
+	return [builtModel as ProcessedModel];
 };
 
 const rebuildModels = async (): Promise<ModelsRefreshSummary> => {

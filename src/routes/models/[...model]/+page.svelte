@@ -134,7 +134,7 @@
 	<meta property="og:description" content="Use {modelId} with {publicConfig.PUBLIC_APP_NAME}" />
 	<meta
 		property="og:image"
-		content="{publicConfig.PUBLIC_ORIGIN || page.url.origin}{base}/models/{modelPath}/thumbnail.png"
+		content="{publicConfig.assetPath}/fulltext-logo.svg"
 	/>
 	<meta property="og:image:alt" content="{modelId} - {publicConfig.PUBLIC_APP_NAME}" />
 	<meta property="og:image:width" content="1200" />
@@ -146,7 +146,7 @@
 	<meta name="twitter:description" content="Use {modelId} with {publicConfig.PUBLIC_APP_NAME}" />
 	<meta
 		name="twitter:image"
-		content="{publicConfig.PUBLIC_ORIGIN || page.url.origin}{base}/models/{modelPath}/thumbnail.png"
+		content="{publicConfig.assetPath}/fulltext-logo.svg"
 	/>
 	<meta name="twitter:image:alt" content="{modelId} - {publicConfig.PUBLIC_APP_NAME}" />
 </svelte:head>

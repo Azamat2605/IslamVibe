@@ -98,19 +98,16 @@
 	// Initialize multimodal override for this model if not set yet
 	$effect(() => {
 		if (model) {
-			// Default to the model's advertised capability
-			settings.initValue("multimodalOverrides", modelId, !!model.multimodal);
+			// Default to enabled (true) for multimodal support
+			settings.initValue("multimodalOverrides", modelId, true);
 		}
 	});
 
 	// Initialize tools override for this model if not set yet
 	$effect(() => {
 		if (model) {
-			settings.initValue(
-				"toolsOverrides",
-				modelId,
-				Boolean((model as unknown as { supportsTools?: boolean }).supportsTools)
-			);
+			// Default to disabled (false) for tool calling
+			settings.initValue("toolsOverrides", modelId, false);
 		}
 	});
 
@@ -126,9 +123,9 @@
 
 	// Provider selection policies for the dropdown
 	const PROVIDER_POLICIES = [
-		{ value: "auto", label: "Auto (your HF preference order)" },
-		{ value: "fastest", label: "Fastest (highest throughput)" },
-		{ value: "cheapest", label: "Cheapest (lowest cost)" },
+		{ value: "auto", label: "Авто (ваш порядок предпочтений HF)" },
+		{ value: "fastest", label: "Самый быстрый (наибольшая пропускная способность)" },
+		{ value: "cheapest", label: "Самый дешёвый (наименьшая стоимость)" },
 	] as const;
 </script>
 
@@ -159,7 +156,7 @@
 			}}
 		>
 			<CarbonChat class="mr-1.5 text-sm" />
-			New chat
+			Новый чат
 		</button>
 
 		{#if model.modelUrl}
@@ -170,7 +167,7 @@
 				class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
 			>
 				<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs " />
-				Model page
+				Страница модели
 			</a>
 		{/if}
 
@@ -182,7 +179,7 @@
 				class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
 			>
 				<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs " />
-				Dataset page
+				Страница датасета
 			</a>
 		{/if}
 
@@ -194,7 +191,7 @@
 				rel="noreferrer"
 			>
 				<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs " />
-				Model website
+				Веб-сайт модели
 			</a>
 		{/if}
 
@@ -207,7 +204,7 @@
 					class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
 				>
 					<CarbonCode class="mr-1.5 shrink-0 text-xs" />
-					Use via API
+					Использовать через API
 				</a>
 				<a
 					href={"https://huggingface.co/" + model.name}
@@ -216,7 +213,7 @@
 					class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
 				>
 					<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs" />
-					View model card
+					Карточка модели
 				</a>
 			{/if}
 			<CopyToClipBoardBtn
@@ -224,7 +221,7 @@
 				classNames="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
 			>
 				<div class="flex items-center gap-1.5">
-					<CarbonCopy class="shrink-0 text-xs" />Copy direct link
+					<CarbonCopy class="shrink-0 text-xs" />Копировать прямую ссылку
 				</div>
 			</CopyToClipBoardBtn>
 		{/if}
@@ -233,12 +230,12 @@
 	<div class="relative flex w-full flex-col gap-2">
 		{#if model?.isRouter}
 			<p class="mb-3 mt-2 rounded-lg bg-gray-100 px-3 py-2 text-sm dark:bg-white/5">
-				<IconOmni classNames="-translate-y-px" /> Omni routes your messages to the best underlying model
-				depending on your request.
+				<IconOmni classNames="-translate-y-px" /> Omni направляет ваши сообщения к наилучшей базовой модели
+				в зависимости от вашего запроса.
 			</p>
 		{/if}
 		<div class="flex w-full flex-row content-between">
-			<h3 class="mb-1 text-[15px] font-semibold text-gray-800 dark:text-gray-200">System Prompt</h3>
+			<h3 class="mb-1 text-[15px] font-semibold text-gray-800 dark:text-gray-200">Системная инструкция</h3>
 			{#if hasCustomPreprompt}
 				<button
 					class="ml-auto text-xs underline decoration-gray-300 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"
@@ -250,57 +247,30 @@
 						}));
 					}}
 				>
-					Reset
+					Сбросить
 				</button>
 			{/if}
 		</div>
 
 		<textarea
-			aria-label="Custom system prompt"
+			aria-label="Пользовательская системная инструкция"
 			rows="8"
 			class="w-full resize-none rounded-md border border-gray-200 bg-gray-50 p-2 text-[13px] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
 			bind:value={getCustomPrompt, setCustomPrompt}
 		></textarea>
 		<!-- Capabilities -->
-		<div
-			class="mt-3 rounded-xl border border-gray-200 bg-white px-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-		>
-			<div class="divide-y divide-gray-200 dark:divide-gray-700">
-				<div class="flex items-start justify-between py-3">
-					<div>
-						<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-							Tool calling (functions)
-						</div>
-						<p class="text-[12px] text-gray-500 dark:text-gray-400">
-							Enable tools and allow the model to call them in chat.
-						</p>
-					</div>
-					<Switch name="forceTools" bind:checked={getToolsOverride, setToolsOverride} />
-				</div>
-
-				<div class="flex items-start justify-between py-3">
-					<div>
-						<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-							Multimodal support (image inputs)
-						</div>
-						<p class="text-[12px] text-gray-500 dark:text-gray-400">
-							Enable image uploads and send images to this model.
-						</p>
-					</div>
-					<Switch
-						name="forceMultimodal"
-						bind:checked={getMultimodalOverride, setMultimodalOverride}
-					/>
-				</div>
-
-				{#if model?.isRouter}
+		{#if model?.isRouter}
+			<div
+				class="mt-3 rounded-xl border border-gray-200 bg-white px-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+			>
+				<div class="divide-y divide-gray-200 dark:divide-gray-700">
 					<div class="flex items-start justify-between py-3">
 						<div>
 							<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-								Hide prompt examples
+								Скрыть примеры запросов
 							</div>
 							<p class="text-[12px] text-gray-500 dark:text-gray-400">
-								Hide the prompt suggestions above the chat input.
+								Скрыть подсказки над полем ввода сообщения.
 							</p>
 						</div>
 						<Switch
@@ -308,9 +278,9 @@
 							bind:checked={getHidePromptExamples, setHidePromptExamples}
 						/>
 					</div>
-				{/if}
+				</div>
 			</div>
-		</div>
+		{/if}
 
 		{#if publicConfig.isHuggingChat && model.providers?.length && !model?.isRouter}
 			<div
@@ -318,15 +288,15 @@
 			>
 				<div>
 					<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-						Inference Providers
+						Провайдеры вывода
 					</div>
 					<p class="text-[12px] text-gray-500 dark:text-gray-400">
-						Choose which Inference Provider to use with this model. You can also manage provider
-						preferences in <a
+						Выберите, какой провайдер вывода использовать с этой моделью. Вы также можете управлять
+						предпочтениями провайдеров в <a
 							class="underline decoration-gray-400 hover:decoration-gray-700 dark:decoration-gray-500 dark:hover:decoration-gray-300"
 							target="_blank"
 							href="https://huggingface.co/settings/inference-providers/settings"
-							>your HF settings</a
+							>ваших настройках HF</a
 						>.
 					</p>
 				</div>
@@ -336,7 +306,7 @@
 					onValueChange={(v) => v && setProviderOverride(v)}
 				>
 					<Select.Trigger
-						aria-label="Select inference provider"
+						aria-label="Выберите провайдера вывода"
 						class="inline-flex w-auto items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
 					>
 						{@const currentValue = getProviderOverride()}
@@ -387,7 +357,7 @@
 								<Select.GroupHeading
 									class="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400"
 								>
-									Selection mode
+									Режим выбора
 								</Select.GroupHeading>
 								{#each PROVIDER_POLICIES as opt (opt.value)}
 									<Select.Item
@@ -425,7 +395,7 @@
 								<Select.GroupHeading
 									class="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400"
 								>
-									Specific provider
+									Конкретный провайдер
 								</Select.GroupHeading>
 								{#each providerList as prov (prov.provider)}
 									{@const hubOrg =

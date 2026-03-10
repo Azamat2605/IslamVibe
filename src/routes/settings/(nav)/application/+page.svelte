@@ -4,7 +4,6 @@
 	import CarbonLogoGithub from "~icons/carbon/logo-github";
 
 	import { useSettingsStore } from "$lib/stores/settings";
-	import type { StreamingMode } from "$lib/types/Settings";
 	import Switch from "$lib/components/Switch.svelte";
 
 	import { goto } from "$app/navigation";
@@ -26,18 +25,6 @@
 	}
 	function setShareWithAuthors(v: boolean) {
 		settings.update((s) => ({ ...s, shareConversationsWithModelAuthors: v }));
-	}
-	function getStreamingMode() {
-		return $settings.streamingMode;
-	}
-	function setStreamingMode(v: StreamingMode) {
-		settings.update((s) => ({ ...s, streamingMode: v }));
-	}
-	function getDirectPaste() {
-		return $settings.directPaste;
-	}
-	function setDirectPaste(v: boolean) {
-		settings.update((s) => ({ ...s, directPaste: v }));
 	}
 
 	const client = useAPIClient();
@@ -81,7 +68,7 @@
 					setBillingOrganization(data.currentBillingOrg ?? "");
 				}
 			} catch {
-				billingOrgsError = "Failed to load billing options";
+				billingOrgsError = "Не удалось загрузить варианты оплаты";
 			} finally {
 				billingOrgsLoading = false;
 			}
@@ -97,14 +84,14 @@
 
 <div class="flex w-full flex-col gap-4">
 	<h2 class="text-center text-lg font-semibold text-gray-800 dark:text-gray-200 md:text-left">
-		Application Settings
+		Настройки приложения
 	</h2>
 
 	{#if OPENAI_BASE_URL !== null}
 		<div
 			class="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[12px] text-gray-700 dark:border-gray-700 dark:bg-gray-700/80 dark:text-gray-300"
 		>
-			<span class="font-medium">API Base URL:</span>
+			<span class="font-medium">Базовый URL API:</span>
 			<code class="ml-1 break-all font-mono text-[12px] text-gray-800 dark:text-gray-100"
 				>{OPENAI_BASE_URL}</code
 			>
@@ -120,7 +107,7 @@
 				rel="noreferrer"
 				class="text-sm font-light text-gray-500 dark:text-gray-400"
 			>
-				Latest deployment <span class="gap-2 font-mono"
+				Последнее развертывание <span class="gap-2 font-mono"
 					>{publicConfig.PUBLIC_COMMIT_SHA.slice(0, 7)}</span
 				>
 			</a>
@@ -131,7 +118,7 @@
 			<p
 				class="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-500/10 dark:text-red-300"
 			>
-				Admin mode
+				Режим администратора
 			</p>
 			<button
 				class="btn rounded-md text-xs"
@@ -147,14 +134,14 @@
 						await goto(page.url.pathname, { invalidateAll: true });
 					} catch (e) {
 						console.error(e);
-						$error = "Model refresh failed";
+						$error = "Не удалось обновить модели";
 					} finally {
 						refreshing = false;
 					}
 				}}
 				disabled={refreshing}
 			>
-				{refreshing ? "Refreshing…" : "Refresh models"}
+				{refreshing ? "Обновление…" : "Обновить модели"}
 			</button>
 			{#if refreshMessage}
 				<span class="text-xs text-gray-600 dark:text-gray-400">{refreshMessage}</span>
@@ -170,10 +157,10 @@
 					<div class="flex items-start justify-between py-3">
 						<div>
 							<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-								Share with model authors
+								Делиться с авторами моделей
 							</div>
 							<p class="text-[12px] text-gray-500 dark:text-gray-400">
-								Sharing your data helps improve open models over time.
+								Обмен вашими данными помогает улучшать открытые модели со временем.
 							</p>
 						</div>
 						<Switch
@@ -183,43 +170,13 @@
 					</div>
 				{/if}
 
-				<div class="flex items-start justify-between py-3">
-					<div>
-						<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-							Streaming mode
-						</div>
-						<p class="text-[12px] text-gray-500 dark:text-gray-400">
-							Choose how assistant text appears while generating.
-						</p>
-					</div>
-					<select
-						class="rounded-md border border-gray-300 bg-white px-1 py-1 text-xs text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-						value={getStreamingMode()}
-						onchange={(e) => setStreamingMode(e.currentTarget.value as StreamingMode)}
-					>
-						<option value="smooth">Smooth stream</option>
-						<option value="raw">Raw stream</option>
-					</select>
-				</div>
-
-				<div class="flex items-start justify-between py-3">
-					<div>
-						<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-							Paste text directly
-						</div>
-						<p class="text-[12px] text-gray-500 dark:text-gray-400">
-							Paste long text directly into chat instead of a file.
-						</p>
-					</div>
-					<Switch name="directPaste" bind:checked={getDirectPaste, setDirectPaste} />
-				</div>
 
 				<!-- Theme selector -->
 				<div class="flex items-start justify-between py-3">
 					<div>
-						<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">Theme</div>
+						<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">Тема</div>
 						<p class="text-[12px] text-gray-500 dark:text-gray-400">
-							Choose light, dark, or follow system.
+							Выберите светлую, тёмную или следуйте системной.
 						</p>
 					</div>
 					<select
@@ -231,9 +188,9 @@
 							themePref = v;
 						}}
 					>
-						<option value="system">System</option>
-						<option value="light">Light</option>
-						<option value="dark">Dark</option>
+						<option value="system">Системная</option>
+						<option value="light">Светлая</option>
+						<option value="dark">Тёмная</option>
 					</select>
 				</div>
 			</div>
@@ -248,14 +205,14 @@
 					<!-- Bill usage to -->
 					<div class="flex items-start justify-between py-3">
 						<div>
-							<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">Billing</div>
+							<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">Оплата</div>
 							<p class="text-[12px] text-gray-500 dark:text-gray-400">
-								Select between personal or organization billing (for eligible organizations).
+								Выберите личную или организационную оплату (для подходящих организаций).
 							</p>
 						</div>
 						<div class="flex items-center">
 							{#if billingOrgsLoading}
-								<span class="text-xs text-gray-500 dark:text-gray-400">Loading...</span>
+								<span class="text-xs text-gray-500 dark:text-gray-400">Загрузка...</span>
 							{:else if billingOrgsError}
 								<span class="text-xs text-red-500">{billingOrgsError}</span>
 							{:else}
@@ -264,7 +221,7 @@
 									value={getBillingOrganization()}
 									onchange={(e) => setBillingOrganization(e.currentTarget.value)}
 								>
-									<option value="">Personal</option>
+									<option value="">Личная</option>
 									{#each billingOrgs as org}
 										<option value={org.preferred_username}>{org.name}</option>
 									{/each}
@@ -276,10 +233,10 @@
 					<div class="flex items-start justify-between py-3">
 						<div>
 							<div class="text-[13px] font-medium text-gray-800 dark:text-gray-200">
-								Providers Usage
+								Использование провайдеров
 							</div>
 							<p class="text-[12px] text-gray-500 dark:text-gray-400">
-								See which providers you use and choose your preferred ones.
+								Посмотрите, какие провайдеры вы используете, и выберите предпочтительные.
 							</p>
 						</div>
 						<a
@@ -289,7 +246,7 @@
 							target="_blank"
 							class="whitespace-nowrap rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
 						>
-							View Usage
+							Просмотр использования
 						</a>
 					</div>
 				</div>
@@ -302,26 +259,26 @@
 					href="https://github.com/huggingface/chat-ui"
 					target="_blank"
 					class="flex items-center underline decoration-gray-300 underline-offset-2 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"
-					><CarbonLogoGithub class="mr-1.5 shrink-0 text-sm " /> Github repository</a
+					><CarbonLogoGithub class="mr-1.5 shrink-0 text-sm " /> Репозиторий Github</a
 				>
 				<a
 					href="https://huggingface.co/spaces/huggingchat/chat-ui/discussions/764"
 					target="_blank"
 					rel="noreferrer"
 					class="flex items-center underline decoration-gray-300 underline-offset-2 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"
-					><CarbonArrowUpRight class="mr-1.5 shrink-0 text-sm " /> Share your feedback on HuggingChat</a
+					><CarbonArrowUpRight class="mr-1.5 shrink-0 text-sm " /> Поделитесь отзывом о HuggingChat</a
 				>
 				<a
 					href="{base}/privacy"
 					class="flex items-center underline decoration-gray-300 underline-offset-2 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"
-					><CarbonArrowUpRight class="mr-1.5 shrink-0 text-sm " /> About & Privacy</a
+					><CarbonArrowUpRight class="mr-1.5 shrink-0 text-sm " /> О приложении и конфиденциальность</a
 				>
 			{/if}
 			<button
 				onclick={async (e) => {
 					e.preventDefault();
 
-					confirm("Are you sure you want to delete all conversations?") &&
+					confirm("Вы уверены, что хотите удалить все диалоги?") &&
 						client.conversations
 							.delete()
 							.then(async () => {
@@ -334,7 +291,7 @@
 				}}
 				type="submit"
 				class="flex items-center underline decoration-red-200 underline-offset-2 hover:decoration-red-500 dark:decoration-red-900 dark:hover:decoration-red-700"
-				><CarbonTrashCan class="mr-2 inline text-sm text-red-500" />Delete all conversations</button
+				><CarbonTrashCan class="mr-2 inline text-sm text-red-500" />Удалить все диалоги</button
 			>
 		</div>
 	</div>

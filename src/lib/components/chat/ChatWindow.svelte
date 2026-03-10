@@ -643,21 +643,21 @@
 						class:paste-glow={pastedLongContent}
 					>
 						{#if lastIsError}
-							<ChatInput value="Sorry, something went wrong. Please try again." disabled={true} />
+							<ChatInput value="Извините, что-то пошло не так. Пожалуйста, попробуйте еще раз." disabled={true} />
 						{:else}
-							<ChatInput
-								placeholder={isReadOnly ? "This conversation is read-only." : "Ask anything"}
-								{loading}
-								bind:value={draft}
-								bind:files
-								mimeTypes={activeMimeTypes}
-								onsubmit={handleSubmit}
-								{onPaste}
-								disabled={isReadOnly || lastIsError}
-								{modelIsMultimodal}
-								{modelSupportsTools}
-								bind:focused
-							/>
+						<ChatInput
+							placeholder={isReadOnly ? "Этот чат доступен только для чтения." : "Спросите о чем угодно"}
+							{loading}
+							bind:value={draft}
+							bind:files
+							mimeTypes={activeMimeTypes}
+							onsubmit={handleSubmit}
+							{onPaste}
+							disabled={isReadOnly || lastIsError}
+							{modelIsMultimodal}
+							{modelSupportsTools}
+							bind:focused
+						/>
 						{/if}
 
 						{#if loading}
@@ -675,7 +675,7 @@
 									onclick={() => {
 										isRecording = true;
 									}}
-									aria-label="Start voice recording"
+									aria-label="Начать запись голоса"
 								>
 									<IconMic class="size-4" />
 								</button>
@@ -687,7 +687,7 @@
 									: '!bg-black !text-white dark:!bg-white dark:!text-black'}"
 								disabled={!draft || isReadOnly}
 								type="submit"
-								aria-label="Send message"
+								aria-label="Отправить сообщение"
 								name="submit"
 							>
 								<IconArrowUp />
@@ -706,7 +706,7 @@
 					{#if loading && streamingToolCallName}
 						<span class="inline-flex items-center gap-1 whitespace-nowrap text-xs">
 							<LucideHammer class="size-3" />
-							Calling tool
+							Вызов инструмента
 							<span class="loading-dots font-medium">
 								{availableTools.find((t) => t.name === streamingToolCallName)?.displayName ??
 									streamingToolCallName}
@@ -726,7 +726,7 @@
 								<IconOmni />
 								{currentModel.displayName}
 							{:else}
-								Model: {currentModel.displayName}
+								Модель: {currentModel.displayName}
 								{#if hasProviderOverride}
 									{@const hubOrg =
 										PROVIDERS_HUB_ORGS[providerOverride as keyof typeof PROVIDERS_HUB_ORGS]}
@@ -765,7 +765,7 @@
 								{streamingRouterMetadata.route}
 							</span>
 
-							<span class="text-gray-500">with</span>
+							<span class="text-gray-500">с</span>
 
 							<span class="router-badge-text">
 								{streamingRouterModelName}
@@ -774,9 +774,9 @@
 					{:else}
 						<div
 							class="loading-dots relative inline-flex items-center text-gray-400 dark:text-gray-400"
-							aria-label="Routing…"
+							aria-label="Маршрутизация…"
 						>
-							<IconOmni classNames="text-xs animate-pulse mr-1" /> Routing
+							<IconOmni classNames="text-xs animate-pulse mr-1" /> Маршрутизация
 						</div>
 					{/if}
 				{:else}
@@ -785,7 +785,7 @@
 					</span>
 				{/if}
 				{#if !messages.length && !loading}
-					<span class="max-sm:hidden">Generated content may be inaccurate or false.</span>
+					<span class="max-sm:hidden">Генерируемый контент может быть неточным или ложным.</span>
 				{/if}
 			</div>
 		</div>

@@ -50,7 +50,7 @@
 			content="Browse {publicConfig.PUBLIC_APP_NAME} available models"
 		/>
 		<meta property="og:url" content={page.url.href} />
-		<meta property="og:image" content="{publicConfig.assetPath}/thumbnail.png" />
+		<meta property="og:image" content="{publicConfig.assetPath}/fulltext-logo.svg" />
 		<meta property="og:image:alt" content="{publicConfig.PUBLIC_APP_NAME} preview" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="{publicConfig.PUBLIC_APP_NAME} - Models" />
@@ -58,7 +58,7 @@
 			name="twitter:description"
 			content="Browse {publicConfig.PUBLIC_APP_NAME} available models"
 		/>
-		<meta name="twitter:image" content="{publicConfig.assetPath}/thumbnail.png" />
+		<meta name="twitter:image" content="{publicConfig.assetPath}/fulltext-logo.svg" />
 		<meta name="twitter:image:alt" content="{publicConfig.PUBLIC_APP_NAME} preview" />
 	{/if}
 </svelte:head>
@@ -66,7 +66,7 @@
 <div class="scrollbar-custom h-full overflow-y-auto py-12 max-sm:pt-8 md:py-24">
 	<div class="pt-42 mx-auto flex flex-col px-5 xl:w-[60rem] 2xl:w-[64rem]">
 		<div class="flex items-center">
-			<h1 class="text-xl font-bold sm:text-2xl">Models</h1>
+			<h1 class="text-xl font-bold sm:text-2xl">Модели</h1>
 			{#if publicConfig.isHuggingChat}
 				<a
 					href="https://huggingface.co/docs/inference-providers"
@@ -79,7 +79,7 @@
 			{/if}
 		</div>
 		<h2 class="text-gray-500">
-			All models available{#if publicConfig.isHuggingChat}&nbsp;via <a
+			Все доступные модели{#if publicConfig.isHuggingChat}&nbsp;через <a
 					target="_blank"
 					href="https://huggingface.co/inference/models"
 					class="underline decoration-gray-300 hover:decoration-gray-500 dark:decoration-gray-600 dark:hover:decoration-gray-500"
@@ -91,7 +91,7 @@
 		<input
 			type="search"
 			bind:value={modelFilter}
-			placeholder="Search by name"
+			placeholder="Поиск по названию"
 			aria-label="Search models by name or id"
 			class="mt-4 w-full rounded-3xl border border-gray-300 bg-white px-5 py-2 text-[15px]
 				placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300
@@ -144,13 +144,13 @@
 									<span
 										class="rounded border border-gray-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400"
 									>
-										Default
+										По умолчанию
 									</span>
 								{/if}
 							</div>
 							<p class="truncate pr-4 text-xs text-gray-500 dark:text-gray-400 sm:text-[13px]">
 								{model.isRouter
-									? "Routes your messages to the best model for your request."
+									? "Направляет ваши сообщения к лучшей модели для вашего запроса."
 									: model.description || "-"}
 							</p>
 						</div>
@@ -163,21 +163,21 @@
 									PROVIDERS_HUB_ORGS[providerOverride as keyof typeof PROVIDERS_HUB_ORGS]}
 								{#if providerOverride === "fastest"}
 									<div
-										title="Provider: Fastest"
+										title="Провайдер: Самый быстрый"
 										class="rounded-md bg-green-50 p-1.5 text-green-600 dark:bg-green-900/20 dark:text-green-400"
 									>
 										<IconFast classNames="size-3 sm:size-3.5" />
 									</div>
 								{:else if providerOverride === "cheapest"}
 									<div
-										title="Provider: Cheapest"
+										title="Провайдер: Самый дешевый"
 										class="rounded-md bg-blue-50 p-1.5 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
 									>
 										<IconCheap classNames="size-3 sm:size-3.5" />
 									</div>
 								{:else if hubOrg}
 									<div
-										title="Provider: {providerOverride}"
+										title="Провайдер: {providerOverride}"
 										class="flex size-[26px] items-center justify-center rounded-md bg-gray-100 p-1 dark:bg-gray-800 sm:size-[30px]"
 									>
 										<img
@@ -190,7 +190,7 @@
 							{/if}
 							{#if $settings.toolsOverrides?.[model.id] ?? (model as { supportsTools?: boolean }).supportsTools}
 								<div
-									title="This model supports tool calling (functions)."
+									title="Эта модель поддерживает вызов инструментов (функций)."
 									class="rounded-md bg-purple-50 p-1.5 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
 								>
 									<LucideHammer class="size-3 sm:size-3.5" />
@@ -198,7 +198,7 @@
 							{/if}
 							{#if $settings.multimodalOverrides?.[model.id] ?? model.multimodal}
 								<div
-									title="This model is multimodal and supports image inputs natively."
+									title="Эта модель мультимодальна и поддерживает ввод изображений."
 									class="rounded-md bg-blue-50 p-1.5 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
 								>
 									<LucideImage class="size-3 sm:size-3.5" />
@@ -206,8 +206,8 @@
 							{/if}
 							<button
 								type="button"
-								title="Model settings"
-								aria-label="Model settings for {model.displayName}"
+								title="Настройки модели"
+								aria-label="Настройки модели для {model.displayName}"
 								class="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
 								onclick={(e) => {
 									e.preventDefault();
@@ -221,7 +221,7 @@
 								<span
 									class="rounded-full bg-black px-2.5 py-1 text-xs font-bold text-white shadow-md dark:bg-white dark:text-black"
 								>
-									Active
+									Активна
 								</span>
 							{/if}
 						</div>

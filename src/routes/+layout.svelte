@@ -194,7 +194,7 @@
 </script>
 
 <svelte:head>
-	<title>{publicConfig.PUBLIC_APP_NAME} - Chat with AI models</title>
+	<title>{publicConfig.PUBLIC_APP_NAME} - Чат с ИИ-моделями</title>
 	<meta name="description" content={publicConfig.PUBLIC_APP_DESCRIPTION} />
 	<meta name="twitter:site" content="@huggingface" />
 
@@ -202,18 +202,18 @@
 	<!-- feel free to refacto if there's a better way -->
 	{#if !page.url.pathname.includes("/models/")}
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="{publicConfig.PUBLIC_APP_NAME} - Chat with AI models" />
+		<meta name="twitter:title" content="{publicConfig.PUBLIC_APP_NAME} - Чат с ИИ-моделями" />
 		<meta name="twitter:description" content={publicConfig.PUBLIC_APP_DESCRIPTION} />
 		<meta
 			name="twitter:image"
 			content="{publicConfig.PUBLIC_ORIGIN ||
-				page.url.origin}{publicConfig.assetPath}/thumbnail.png"
+				page.url.origin}{publicConfig.assetPath}/fulltext-logo.svg"
 		/>
 		<meta name="twitter:image:alt" content="{publicConfig.PUBLIC_APP_NAME} preview" />
-		<meta property="og:title" content="{publicConfig.PUBLIC_APP_NAME} - Chat with AI models" />
+		<meta property="og:title" content="{publicConfig.PUBLIC_APP_NAME} - Чат с ИИ-моделями" />
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content="{publicConfig.PUBLIC_ORIGIN || page.url.origin}{base}" />
-		<meta property="og:image" content="{publicConfig.assetPath}/thumbnail.png" />
+		<meta property="og:image" content="{publicConfig.assetPath}/fulltext-logo.svg" />
 		<meta property="og:description" content={publicConfig.PUBLIC_APP_DESCRIPTION} />
 		<meta property="og:site_name" content={publicConfig.PUBLIC_APP_NAME} />
 		<meta property="og:locale" content="en_US" />
@@ -272,7 +272,7 @@
 			class="hidden size-8 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white/90 text-sm font-medium text-gray-700 shadow-sm hover:bg-white/60 hover:text-gray-500 dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-200 dark:hover:bg-gray-700 md:absolute md:right-6 md:top-5 md:flex
 				{$loading ? 'cursor-not-allowed opacity-40' : ''}"
 			onclick={() => shareModal.open()}
-			aria-label="Share conversation"
+			aria-label="Поделиться беседой"
 			disabled={$loading}
 		>
 			<IconShare />

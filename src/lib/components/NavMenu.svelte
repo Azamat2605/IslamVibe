@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	export const titles: { [key: string]: string } = {
-		today: "Today",
-		week: "This week",
-		month: "This month",
-		older: "Older",
+		today: "Сегодня",
+		week: "На этой неделе",
+		month: "В этом месяце",
+		older: "Ранее",
 	} as const;
 </script>
 
@@ -145,7 +145,7 @@
 		class="flex rounded-lg border bg-white px-2 py-0.5 text-center shadow-sm hover:shadow-none dark:border-gray-600 dark:bg-gray-700 sm:text-smd"
 		title="Ctrl/Cmd + Shift + O"
 	>
-		New Chat
+		Новый чат
 	</a>
 </div>
 
@@ -210,7 +210,7 @@
 		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 		onclick={handleNavItemClick}
 	>
-		Models
+		Модели
 		<span
 			class="ml-auto rounded-md bg-gray-500/5 px-1.5 py-0.5 text-xs text-gray-400 dark:bg-gray-500/20 dark:text-gray-400"
 			>{nModels}</span
@@ -222,7 +222,7 @@
 			onclick={() => (showMcpModal = true)}
 			class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 		>
-			MCP Servers
+			Серверы MCP
 			{#if $enabledServersCount > 0}
 				<span
 					class="ml-auto rounded-md bg-blue-600/10 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-600/20 dark:text-blue-400"
@@ -239,13 +239,13 @@
 			class="flex h-9 flex-none flex-grow items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 			onclick={handleNavItemClick}
 		>
-			Settings
+		Настройки
 		</a>
 		<button
 			onclick={() => {
 				switchTheme();
 			}}
-			aria-label="Toggle theme"
+		aria-label="Переключить тему"
 			class="flex size-9 min-w-[1.5em] flex-none items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 		>
 			{#if browser}
