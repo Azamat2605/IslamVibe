@@ -23,12 +23,12 @@ export interface DifyWorkflowData {
 // Parameters for Dify endpoint (minimal, only type)
 export const endpointDifyParametersSchema = z.object({
 	type: z.literal("dify"),
-	// model is passed by addEndpoint but not used
-	model: z.any().optional(),
+	// _model is passed by addEndpoint but not used (prefixed with _ to indicate unused)
+	_model: z.unknown().optional(),
 });
 
 // Debug flag - можно включить через переменную окружения DIFY_DEBUG
-const DEBUG = (config as any).DIFY_DEBUG === "true";
+const DEBUG = (config as unknown as Record<string, unknown>).DIFY_DEBUG === "true";
 
 /**
  * Endpoint for Dify.ai Chat API
@@ -38,7 +38,7 @@ export async function endpointDify(
 	input: z.input<typeof endpointDifyParametersSchema>
 ): Promise<Endpoint> {
 	// input is not used for configuration, but we parse it for consistency
-	const { type, model } = endpointDifyParametersSchema.parse(input);
+	endpointDifyParametersSchema.parse(input);
 
 	const apiKey = config.DIFY_API_KEY;
 	const apiUrl = config.DIFY_API_URL;
@@ -47,16 +47,13 @@ export async function endpointDify(
 		throw new Error("DIFY_API_KEY and DIFY_API_URL must be set in environment variables");
 	}
 
-	return async (params: EndpointParameters): Promise<AsyncGenerator<TextGenerationStreamOutputSimplified, void, void>> => {
-		const {
-			messages,
-			preprompt,
-			conversationId,
-			abortSignal,
-		} = params;
+	return async (
+		params: EndpointParameters
+	): Promise<AsyncGenerator<TextGenerationStreamOutputSimplified, void, void>> => {
+		const { messages, abortSignal } = params;
 
 		// Last user message
-		const userMessage = messages.filter(m => m.from === "user").pop();
+		const userMessage = messages.filter((m) => m.from === "user").pop();
 		if (!userMessage) {
 			throw new Error("No user message found");
 		}
@@ -81,7 +78,7 @@ export async function endpointDify(
 		const response = await fetch(url, {
 			method: "POST",
 			headers: {
-				"Authorization": `Bearer ${apiKey}`,
+				Authorization: `Bearer ${apiKey}`,
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify(body),
@@ -90,7 +87,9 @@ export async function endpointDify(
 		const firstByteTime = performance.now();
 		if (DEBUG) {
 			console.log(`[Dify] [TIMING] First byte received: ${firstByteTime.toFixed(2)}ms`);
-			console.log(`[Dify] [TIMING] Time to first byte: ${(firstByteTime - requestStartTime).toFixed(2)}ms`);
+			console.log(
+				`[Dify] [TIMING] Time to first byte: ${(firstByteTime - requestStartTime).toFixed(2)}ms`
+			);
 			console.log("[Dify] Response status:", response.status, response.statusText);
 		}
 
@@ -123,13 +122,17 @@ export async function endpointDify(
 						firstChunkTime = chunkTime;
 						if (DEBUG) {
 							console.log(`[Dify] [TIMING] First chunk received: ${chunkTime.toFixed(2)}ms`);
-							console.log(`[Dify] [TIMING] Time from request start to first chunk: ${(chunkTime - requestStartTime).toFixed(2)}ms`);
+							console.log(
+								`[Dify] [TIMING] Time from request start to first chunk: ${(chunkTime - requestStartTime).toFixed(2)}ms`
+							);
 						}
 					}
 
 					const rawChunk = decoder.decode(value, { stream: false });
 					if (DEBUG) {
-						console.log(`[Dify] [CHUNK] Size: ${rawChunk.length} bytes, Time: ${chunkTime.toFixed(2)}ms`);
+						console.log(
+							`[Dify] [CHUNK] Size: ${rawChunk.length} bytes, Time: ${chunkTime.toFixed(2)}ms`
+						);
 						console.log("[Dify] RAW CHUNK:", rawChunk);
 					}
 					buffer += rawChunk;
@@ -150,7 +153,7 @@ export async function endpointDify(
 						if (DEBUG) {
 							console.log(`[Dify] [SSE] Time: ${lineTime.toFixed(2)}ms, Data:`, data);
 						}
-						
+
 						// Skip empty lines and "[DONE]" (handled separately)
 						// Note: "undefined" is treated as a valid data value that may come from Dify
 						if (!data) {
@@ -167,7 +170,9 @@ export async function endpointDify(
 							const doneTime = performance.now();
 							if (DEBUG) {
 								console.log(`[Dify] [TIMING] [DONE] marker received: ${doneTime.toFixed(2)}ms`);
-								console.log(`[Dify] [TIMING] Total time from request start: ${(doneTime - requestStartTime).toFixed(2)}ms`);
+								console.log(
+									`[Dify] [TIMING] Total time from request start: ${(doneTime - requestStartTime).toFixed(2)}ms`
+								);
 							}
 							yield {
 								token: {
@@ -188,27 +193,37 @@ export async function endpointDify(
 							eventCount++;
 							const eventTime = performance.now();
 							if (DEBUG) {
-								console.log(`[Dify] [EVENT #${eventCount}] Time: ${eventTime.toFixed(2)}ms, Type: ${event.event}, Data:`, event.data);
+								console.log(
+									`[Dify] [EVENT #${eventCount}] Time: ${eventTime.toFixed(2)}ms, Type: ${event.event}, Data:`,
+									event.data
+								);
 							}
-							
+
 							// Helper to extract answer from event data
-							const extractAnswer = (eventData: any): string | undefined => {
+							const extractAnswer = (eventData: unknown): string | undefined => {
 								// Try multiple possible paths
-								if (typeof eventData === 'object' && eventData !== null) {
+								if (typeof eventData === "object" && eventData !== null) {
+									const data = eventData as Record<string, unknown>;
 									// 1. Standard message answer
-									if (eventData.answer !== undefined) return eventData.answer;
+									if (typeof data.answer === "string") return data.answer;
 									// 2. Other possible text fields
-									if (eventData.content !== undefined) return eventData.content;
-									if (eventData.message !== undefined) return eventData.message;
-									if (eventData.response !== undefined) return eventData.response;
-									if (eventData.text !== undefined) return eventData.text;
+									if (typeof data.content === "string") return data.content;
+									if (typeof data.message === "string") return data.message;
+									if (typeof data.response === "string") return data.response;
+									if (typeof data.text === "string") return data.text;
 									// 3. Workflow outputs answer
-									if (eventData.outputs?.answer !== undefined) return eventData.outputs.answer;
-									if (eventData.outputs?.text !== undefined) return eventData.outputs.text;
-									if (eventData.outputs?.content !== undefined) return eventData.outputs.content;
+									const outputs = data.outputs as Record<string, unknown> | undefined;
+									if (outputs && typeof outputs === "object") {
+										if (typeof outputs.answer === "string") return outputs.answer;
+										if (typeof outputs.text === "string") return outputs.text;
+										if (typeof outputs.content === "string") return outputs.content;
+									}
 									// 4. Nested in data field
-									if (eventData.data?.answer !== undefined) return eventData.data.answer;
-								} else if (typeof eventData === 'string') {
+									const nestedData = data.data as Record<string, unknown> | undefined;
+									if (nestedData && typeof nestedData === "object") {
+										if (typeof nestedData.answer === "string") return nestedData.answer;
+									}
+								} else if (typeof eventData === "string") {
 									// If eventData is a string, it might be the answer itself
 									return eventData;
 								}
@@ -216,12 +231,16 @@ export async function endpointDify(
 							};
 
 							// Determine eventData based on type of event.data
-							let eventData: any;
-							if (typeof event.data === 'string') {
+							let eventData: unknown;
+							if (typeof event.data === "string") {
 								try {
 									eventData = JSON.parse(event.data);
 								} catch (innerError) {
-									if (DEBUG) console.warn("[Dify] event.data is a string but not JSON, treating as raw text:", event.data);
+									if (DEBUG)
+										console.warn(
+											"[Dify] event.data is a string but not JSON, treating as raw text:",
+											event.data
+										);
 									eventData = event.data; // Use the string as the data
 								}
 							} else {
@@ -229,7 +248,11 @@ export async function endpointDify(
 								eventData = event.data;
 							}
 
-							if (event.event === "message" || event.event === "node_finished" || event.event === "workflow_finished") {
+							if (
+								event.event === "message" ||
+								event.event === "node_finished" ||
+								event.event === "workflow_finished"
+							) {
 								if (eventData) {
 									const answer = extractAnswer(eventData);
 									if (answer !== undefined) {
@@ -237,7 +260,9 @@ export async function endpointDify(
 										const delta = answer.slice(generatedText.length);
 										const deltaLength = delta.length;
 										if (DEBUG) {
-											console.log(`[Dify] [ANSWER] Time: ${eventTime.toFixed(2)}ms, Length: ${answerLength}, Delta: ${deltaLength}, Text: "${answer.substring(0, 50)}${answer.length > 50 ? '...' : ''}"`);
+											console.log(
+												`[Dify] [ANSWER] Time: ${eventTime.toFixed(2)}ms, Length: ${answerLength}, Delta: ${deltaLength}, Text: "${answer.substring(0, 50)}${answer.length > 50 ? "..." : ""}"`
+											);
 											console.log(`[Dify] [DELTA] "${delta}"`);
 											console.log(`[Dify] [ACCUMULATED] "${generatedText}"`);
 										}
@@ -245,7 +270,9 @@ export async function endpointDify(
 											generatedText = answer;
 											const yieldTime = performance.now();
 											if (DEBUG) {
-												console.log(`[Dify] [YIELD] Time: ${yieldTime.toFixed(2)}ms, Delta length: ${deltaLength}`);
+												console.log(
+													`[Dify] [YIELD] Time: ${yieldTime.toFixed(2)}ms, Delta length: ${deltaLength}`
+												);
 											}
 											// Immediately yield the delta to frontend
 											yield {
@@ -269,14 +296,21 @@ export async function endpointDify(
 								}
 							} else if (event.event === "error") {
 								console.error(`[Dify] [ERROR] Time: ${eventTime.toFixed(2)}ms, Data:`, eventData);
-								const errorMessage = (eventData && (eventData.error || eventData.message)) || "Unknown error";
+								let errorMessage = "Unknown error";
+								if (typeof eventData === "object" && eventData !== null) {
+									const errData = eventData as Record<string, unknown>;
+									if (typeof errData.error === "string") errorMessage = errData.error;
+									else if (typeof errData.message === "string") errorMessage = errData.message;
+								}
 								throw new Error(`Dify error: ${errorMessage}`);
 							} else if (event.event === "done") {
 								// End of stream signaled by Dify
 								const doneTime = performance.now();
 								if (DEBUG) {
 									console.log(`[Dify] [TIMING] 'done' event received: ${doneTime.toFixed(2)}ms`);
-									console.log(`[Dify] [TIMING] Total time from request start: ${(doneTime - requestStartTime).toFixed(2)}ms`);
+									console.log(
+										`[Dify] [TIMING] Total time from request start: ${(doneTime - requestStartTime).toFixed(2)}ms`
+									);
 								}
 								yield {
 									token: {
@@ -291,7 +325,13 @@ export async function endpointDify(
 								return;
 							}
 						} catch (e) {
-							if (DEBUG) console.warn(`[Dify] [PARSE ERROR] Time: ${performance.now().toFixed(2)}ms, Error:`, e, "for data:", data);
+							if (DEBUG)
+								console.warn(
+									`[Dify] [PARSE ERROR] Time: ${performance.now().toFixed(2)}ms, Error:`,
+									e,
+									"for data:",
+									data
+								);
 							// Ignore parse errors and continue processing next line
 							continue;
 						}
@@ -302,7 +342,9 @@ export async function endpointDify(
 				const endTime = performance.now();
 				if (DEBUG) {
 					console.log(`[Dify] [TIMING] Stream processing ended: ${endTime.toFixed(2)}ms`);
-					console.log(`[Dify] [TIMING] Total request duration: ${(endTime - requestStartTime).toFixed(2)}ms`);
+					console.log(
+						`[Dify] [TIMING] Total request duration: ${(endTime - requestStartTime).toFixed(2)}ms`
+					);
 				}
 			}
 		}

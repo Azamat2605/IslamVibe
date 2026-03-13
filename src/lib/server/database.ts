@@ -62,18 +62,92 @@ export class Database {
 		} else {
 			this.client = new MongoClient(config.MONGODB_URL, {
 				directConnection: config.MONGODB_DIRECT_CONNECTION === "true",
+				maxPoolSize: 50,
+				minPoolSize: 5,
+				maxIdleTimeMS: 10000,
+				serverSelectionTimeoutMS: 5000,
+				connectTimeoutMS: 10000,
+				socketTimeoutMS: 45000,
 			});
 		}
 
-		try {
-			logger.info("Connecting to database");
-			await this.client.connect();
-			logger.info("Connected to database");
-			this.client.db(config.MONGODB_DB_NAME + (import.meta.env.MODE === "test" ? "-test" : ""));
-			await this.initDatabase();
-		} catch (err) {
-			logger.error(err, "Error connecting to database");
-			process.exit(1);
+		// Retry logic for database connection
+		const maxRetries = 5;
+		const initialDelay = 1000; // 1 second
+		let lastError: Error | undefined;
+
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				if (attempt > 1) {
+					logger.info(`Retrying database connection (attempt ${attempt}/${maxRetries})...`);
+				} else {
+					logger.info("Connecting to database");
+				}
+
+				await this.client.connect();
+				logger.info("Connected to database");
+
+				// Verify connection by accessing the database
+				const db = this.client.db(
+					config.MONGODB_DB_NAME + (import.meta.env.MODE === "test" ? "-test" : "")
+				);
+				await db.command({ ping: 1 });
+				logger.info("Database ping successful");
+
+				await this.initDatabase();
+				logger.info("Database initialization complete");
+
+				// Connection successful, break out of retry loop
+				break;
+			} catch (err) {
+				lastError = err as Error;
+				logger.error(err, `Error connecting to database (attempt ${attempt}/${maxRetries})`);
+
+				if (attempt < maxRetries) {
+					// Exponential backoff: 1s, 2s, 4s, 8s, 16s
+					const delay = initialDelay * Math.pow(2, attempt - 1);
+					logger.info(`Waiting ${delay}ms before next retry...`);
+					await new Promise((resolve) => setTimeout(resolve, delay));
+
+					// Close the failed connection before retrying
+					try {
+						await this.client?.close();
+					} catch (closeErr) {
+						logger.warn(closeErr, "Error closing failed connection");
+					}
+
+					// Recreate client for next attempt
+					if (this.mongoServer) {
+						this.client = new MongoClient(this.mongoServer.getUri(), {
+							directConnection: config.MONGODB_DIRECT_CONNECTION === "true",
+						});
+					} else {
+						this.client = new MongoClient(config.MONGODB_URL, {
+							directConnection: config.MONGODB_DIRECT_CONNECTION === "true",
+							maxPoolSize: 50,
+							minPoolSize: 5,
+							maxIdleTimeMS: 10000,
+							serverSelectionTimeoutMS: 5000,
+							connectTimeoutMS: 10000,
+							socketTimeoutMS: 45000,
+						});
+					}
+				} else {
+					// Max retries reached
+					logger.error(lastError, "Failed to connect to database after maximum retries");
+
+					if (!config.MONGODB_URL) {
+						// In-memory mode already, just throw error
+						throw lastError;
+					} else {
+						// For production with MongoDB URL, we could fall back to in-memory mode
+						// or exit depending on requirements. For now, throw error.
+						throw new Error(
+							`Failed to connect to MongoDB after ${maxRetries} attempts: ${lastError.message}`
+						);
+					}
+				}
+			}
 		}
 
 		// Disconnect DB on exit

@@ -40,37 +40,35 @@
 			{#if $isPro}
 				<p class="text-[15px] leading-relaxed">
 					You've used all your available credits. Purchase additional credits to continue using
-					HuggingChat.
+					IslamVibe.
 				</p>
 				<p class="mt-3 text-[15px] italic leading-relaxed opacity-75">
-					Your credits can be used in other HF services and external apps via Inference Providers.
+					Your credits can be used in other IslamVibe services and external apps.
 				</p>
 			{:else}
 				<p class="text-[15px] leading-relaxed">
-					You've reached your message limit. Upgrade to Hugging Face PRO to continue using
-					HuggingChat.
+					You've reached your message limit. Upgrade to IslamVibe Pro to continue using
+					IslamVibe.
 				</p>
 				<p class="mt-3 text-[15px] italic leading-relaxed opacity-75">
-					It's also possible to use your PRO credits in your favorite AI tools.
+					Get more from IslamVibe with Pro features.
 				</p>
 			{/if}
 		</div>
 
 		<div class="flex flex-col gap-2.5">
 			{#if $isPro}
+				<!-- TODO: Insert IslamVibe Billing URL here -->
 				<a
-					href="https://huggingface.co/settings/billing?add-credits=true"
-					target="_blank"
-					rel="noopener noreferrer"
+					href="#"
 					class="w-full rounded-xl bg-black px-5 py-2.5 text-center text-base font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
 				>
 					Purchase Credits
 				</a>
 			{:else}
+				<!-- TODO: Insert IslamVibe Billing URL here -->
 				<a
-					href="https://huggingface.co/subscribe/pro?from=HuggingChat"
-					target="_blank"
-					rel="noopener noreferrer"
+					href="#"
 					class="w-full rounded-xl bg-black px-5 py-2.5 text-center text-base font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
 				>
 					Upgrade to Pro

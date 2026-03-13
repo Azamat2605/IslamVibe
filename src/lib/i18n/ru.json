@@ -1,0 +1,18 @@
+{
+	"nav": {
+		"newChat": "Новый чат",
+		"models": "Модели",
+		"mcpServers": "MCP Серверы",
+		"settings": "Настройки",
+		"toggleTheme": "Сменить тему",
+		"getPro": "Получить Pro",
+		"pro": "Pro",
+		"today": "Сегодня",
+		"week": "На этой неделе",
+		"month": "В этом месяце",
+		"older": "Ранее"
+	},
+	"user": {
+		"anonymous": "Анонимный"
+	}
+}

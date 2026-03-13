@@ -1,6 +1,7 @@
 {
-	"name": "chat-ui",
+	"name": "islamvibe",
 	"version": "0.20.0",
+	"description": "IslamVibe - AI-powered Islamic knowledge assistant for spiritual guidance and learning",
 	"private": true,
 	"packageManager": "npm@9.5.0",
 	"scripts": {

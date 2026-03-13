@@ -6,8 +6,8 @@ export async function GET() {
 		.map((model) => ({
 			id: model.id,
 			name: model.name,
-			websiteUrl: model.websiteUrl ?? "https://huggingface.co",
-			modelUrl: model.modelUrl ?? "https://huggingface.co",
+			websiteUrl: model.websiteUrl ?? "#",
+			modelUrl: model.modelUrl ?? "#",
 			// tokenizer removed in this build
 			datasetName: model.datasetName,
 			datasetUrl: model.datasetUrl,

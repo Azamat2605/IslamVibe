@@ -23,12 +23,6 @@
 	const settings = useSettingsStore();
 	let modelId = $derived(page.params.model ?? "");
 	const publicConfig = usePublicConfig();
-	let modelPath = $derived(
-		modelId
-			.split("/")
-			.map((segment) => encodeURIComponent(segment))
-			.join("/")
-	);
 
 	async function createConversation(message: string) {
 		try {

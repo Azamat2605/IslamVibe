@@ -28,14 +28,6 @@ External providers are responsible for their own security and data handling. Ple
 
 ## Technical details
 
-[![chat-ui](https://img.shields.io/github/stars/huggingface/chat-ui)](https://github.com/huggingface/chat-ui)
+IslamVibe is an Islamic AI assistant built on open-source technology. The app is designed to provide helpful, respectful, and culturally appropriate responses grounded in Islamic principles.
 
-The app is completely open source, and further development takes place on the [huggingface/chat-ui](https://github.com/huggingface/chat-ui) GitHub repo. We're always open to contributions!
-
-You can find the production configuration for HuggingChat [here](https://github.com/huggingface/chat-ui/blob/main/chart/env/prod.yaml).
-
-HuggingChat connects to the OpenAI‑compatible Inference Providers router at `https://router.huggingface.co/v1` to access models across multiple providers. Provider selection may be automatic or fixed depending on the model configuration.
-
-We welcome any feedback on this app: please participate in the public discussion at <https://huggingface.co/spaces/huggingchat/chat-ui/discussions>
-
-<a target="_blank" href="https://huggingface.co/spaces/huggingchat/chat-ui/discussions"><img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-a-discussion-xl.svg" title="open a discussion"></a>
+We welcome any feedback on this app.

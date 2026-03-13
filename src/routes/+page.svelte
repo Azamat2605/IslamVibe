@@ -162,7 +162,7 @@
 		<h2 class="mb-2 text-xl font-semibold">No models available</h2>
 		<p class="text-gray-600 dark:text-gray-300">
 			No chat models are configured. Set `OPENAI_BASE_URL` and ensure the server can reach the
-			endpoint, then reload. If unset, the app defaults to the Hugging Face router.
+			endpoint, then reload. If unset, the app defaults to the IslamVibe Engine.
 		</p>
 	</div>
 {/if}

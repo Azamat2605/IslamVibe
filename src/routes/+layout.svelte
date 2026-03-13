@@ -24,6 +24,8 @@
 	import { shareModal } from "$lib/stores/shareModal";
 	import BackgroundGenerationPoller from "$lib/components/BackgroundGenerationPoller.svelte";
 	import { requireAuthUser } from "$lib/utils/auth";
+	import { initI18n } from "$lib/i18n";
+	import { initRTL } from "$lib/utils/rtl";
 
 	let { data = $bindable(), children } = $props();
 
@@ -124,6 +126,12 @@
 	const settings = createSettingsStore(data.settings);
 
 	onMount(async () => {
+		// Initialize internationalization
+		initI18n();
+		
+		// Initialize RTL support
+		const cleanupRTL = initRTL();
+		
 		if (publicConfig.isHuggingChat && data.user?.username) {
 			fetch(`https://huggingface.co/api/users/${data.user.username}/overview`)
 				.then((res) => res.json())
@@ -177,7 +185,10 @@
 		};
 
 		window.addEventListener("keydown", onKeydown, { capture: true });
-		onDestroy(() => window.removeEventListener("keydown", onKeydown, { capture: true }));
+		onDestroy(() => {
+			window.removeEventListener("keydown", onKeydown, { capture: true });
+			cleanupRTL();
+		});
 	});
 
 	let mobileNavTitle = $derived(
@@ -196,7 +207,7 @@
 <svelte:head>
 	<title>{publicConfig.PUBLIC_APP_NAME} - Чат с ИИ-моделями</title>
 	<meta name="description" content={publicConfig.PUBLIC_APP_DESCRIPTION} />
-	<meta name="twitter:site" content="@huggingface" />
+	<meta name="twitter:site" content="@IslamVibe" />
 
 	<!-- use those meta tags everywhere except on special listing pages -->
 	<!-- feel free to refacto if there's a better way -->

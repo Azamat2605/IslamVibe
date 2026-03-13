@@ -1,0 +1,18 @@
+{
+	"nav": {
+		"newChat": "New chat",
+		"models": "Models",
+		"mcpServers": "MCP Servers",
+		"settings": "Settings",
+		"toggleTheme": "Toggle theme",
+		"getPro": "Get Pro",
+		"pro": "Pro",
+		"today": "Today",
+		"week": "This week",
+		"month": "This month",
+		"older": "Older"
+	},
+	"user": {
+		"anonymous": "Anonymous"
+	}
+}

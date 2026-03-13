@@ -16,6 +16,7 @@
 	let { model, variant = "light" }: Props = $props();
 </script>
 
+<!-- IslamVibe: external links removed -->
 <div
 	class="flex items-center gap-5 rounded-xl bg-gray-100 px-3 py-2 text-xs sm:text-sm
 	{variant === 'dark'
@@ -23,28 +24,28 @@
 		: 'text-gray-800 dark:bg-gray-100 dark:text-gray-600'}"
 >
 	<a
-		href={model.modelUrl || "https://huggingface.co/" + model.name}
+		href="#"
 		target="_blank"
 		rel="noreferrer"
 		class="flex items-center hover:underline"
 		><CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs text-gray-400" />
-		Model
+		Model: {model.name}
 		<div class="max-sm:hidden">&nbsp;page</div></a
 	>
 	{#if model.datasetName || model.datasetUrl}
 		<a
-			href={model.datasetUrl || "https://huggingface.co/datasets/" + model.datasetName}
+			href="#"
 			target="_blank"
 			rel="noreferrer"
 			class="flex items-center hover:underline"
 			><CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs text-gray-400" />
-			Dataset
+			Dataset: {model.datasetName}
 			<div class="max-sm:hidden">&nbsp;page</div></a
 		>
 	{/if}
 	{#if model.hasInferenceAPI}
 		<a
-			href={"https://huggingface.co/playground?modelId=" + model.name}
+			href="#"
 			target="_blank"
 			rel="noreferrer"
 			class="flex items-center hover:underline"

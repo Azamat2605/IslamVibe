@@ -175,32 +175,32 @@
 		<div
 			class="group flex h-9 items-center gap-1.5 rounded-lg pl-2.5 pr-2 hover:bg-gray-100 first:hover:bg-transparent dark:hover:bg-gray-700 first:dark:hover:bg-transparent"
 		>
-			<img
-				src="https://huggingface.co/api/users/{user.username}/avatar?redirect=true"
-				class="size-3.5 rounded-full border bg-gray-500 dark:border-white/40"
-				alt=""
-			/>
+			<!-- IslamVibe: Using placeholder avatar instead of Hugging Face API -->
+			<div
+				class="size-3.5 rounded-full border bg-gradient-to-br from-emerald-500 to-teal-600 dark:border-white/40 flex items-center justify-center text-[8px] text-white font-bold"
+			>
+				{(user?.username || user?.email || "U").charAt(0).toUpperCase()}
+			</div>
 			<span
 				class="flex flex-none shrink items-center gap-1.5 truncate pr-2 text-gray-500 dark:text-gray-400"
 				>{user?.username || user?.email}</span
 			>
 
-			{#if publicConfig.isHuggingChat && $isPro === false}
+			<!-- TODO: Integrate IslamVibe Pro subscription system -->
+			{#if $isPro === false}
 				<a
-					href="https://huggingface.co/subscribe/pro?from=HuggingChat"
-					target="_blank"
-					rel="noopener noreferrer"
+					href="#"
 					class="ml-auto flex h-[20px] items-center gap-1 px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400"
 				>
 					<IconPro />
-					Get PRO
+					IslamVibe Pro
 				</a>
-			{:else if publicConfig.isHuggingChat && $isPro === true}
+			{:else if $isPro === true}
 				<span
 					class="ml-auto flex h-[20px] items-center gap-1 px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400"
 				>
 					<IconPro />
-					PRO
+					IslamVibe Pro
 				</span>
 			{/if}
 		</div>

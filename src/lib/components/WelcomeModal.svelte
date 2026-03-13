@@ -22,39 +22,32 @@
 			<img
 				class="size-full bg-black object-cover"
 				src="{publicConfig.assetPath}/omni-welcome.gif"
-				alt="Omni AI model router animation"
+				alt="IslamVibe AI animation"
 			/>
-			<!-- <h2
-				class="flex translate-y-1 items-center text-3xl font-semibold text-gray-900 dark:text-gray-100"
-			>
-				<Logo classNames="mr-2 size-12 dark:invert" />
-				{publicConfig.PUBLIC_APP_NAME}
-			</h2> -->
 			<div
-				class="absolute bottom-3 right-3 rounded-lg border border-blue-500/20 bg-blue-500/20 px-2 py-0.5 text-sm font-semibold text-blue-500"
+				class="absolute bottom-3 right-3 rounded-lg border border-emerald-500/20 bg-emerald-500/20 px-2 py-0.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400"
 			>
-				Now with MCP!
+				С поддержкой MCP!
 			</div>
 		</div>
 
 		<div class="text-gray-700 dark:text-gray-200">
 			<p class="text-[15px] leading-relaxed">
-				Welcome to {publicConfig.PUBLIC_APP_NAME}, the chat app powered by open source AI models.
+				Добро пожаловать в {publicConfig.PUBLIC_APP_NAME} — ваш исламский ИИ-помощник, основанный на открытых моделях.
 			</p>
 			<p class="mt-3 text-[15px] leading-relaxed">
-				<IconOmni classNames="-translate-y-px" /> Omni automatically picks the best AI model to give
-				you optimal answers depending on your requests.
+				<IconOmni classNames="-translate-y-px" /> <strong>Omni</strong> автоматически выбирает лучшую модель для оптимальных ответов в зависимости от вашего запроса.
 			</p>
 			<p class="mt-3 text-[15px] leading-relaxed">
-				You can also choose from any available open source models to chat with directly.
+				Вы также можете выбрать любую доступную модель для прямого общения.
 			</p>
 		</div>
 
 		<button
-			class="k w-full rounded-xl bg-black px-5 py-2.5 text-base font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+			class="w-full rounded-xl bg-emerald-600 px-5 py-2.5 text-base font-medium text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
 			onclick={close}
 		>
-			Start chatting
+			Начать общение
 		</button>
 	</div>
 </Modal>

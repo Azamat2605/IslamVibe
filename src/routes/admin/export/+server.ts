@@ -140,7 +140,7 @@ export async function POST({ request }) {
 
 	await writer.close();
 
-	logger.info("Uploading", fileName, "to Hugging Face Hub");
+	logger.info("Uploading", fileName, "to IslamVibe Cloud Storage");
 
 	await uploadFile({
 		file: pathToFileURL(fileName) as URL,

@@ -5,7 +5,8 @@ import { requireAdmin } from "$lib/server/api/utils/requireAuth";
 
 export const GET: RequestHandler = async ({ locals }) => {
 	requireAdmin(locals);
-	const base = (config.OPENAI_BASE_URL || "https://router.huggingface.co/v1").replace(/\/$/, "");
+	// IslamVibe Engine - Default API endpoint
+	const base = (config.OPENAI_BASE_URL || "https://api.islamvibe.com/v1").replace(/\/$/, "");
 	const res = await fetch(`${base}/models`);
 	const body = await res.text();
 	let parsed: unknown;

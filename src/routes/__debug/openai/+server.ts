@@ -1,6 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { config } from "$lib/server/config";
-const DEFAULT_OPENAI_BASE = "https://router.huggingface.co/v1";
+// IslamVibe Engine - Default API endpoint
+const DEFAULT_OPENAI_BASE = "https://api.islamvibe.com/v1";
 
 export async function GET() {
 	const base = (config.OPENAI_BASE_URL || DEFAULT_OPENAI_BASE).replace(/\/$/, "");

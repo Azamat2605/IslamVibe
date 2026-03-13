@@ -1,7 +1,6 @@
 <script lang="ts">
 	import CarbonTrashCan from "~icons/carbon/trash-can";
 	import CarbonArrowUpRight from "~icons/carbon/arrow-up-right";
-	import CarbonLogoGithub from "~icons/carbon/logo-github";
 
 	import { useSettingsStore } from "$lib/stores/settings";
 	import Switch from "$lib/components/Switch.svelte";
@@ -95,22 +94,6 @@
 			<code class="ml-1 break-all font-mono text-[12px] text-gray-800 dark:text-gray-100"
 				>{OPENAI_BASE_URL}</code
 			>
-		</div>
-	{/if}
-	{#if !!publicConfig.PUBLIC_COMMIT_SHA}
-		<div
-			class="flex flex-col items-start justify-between text-xl font-semibold text-gray-800 dark:text-gray-200"
-		>
-			<a
-				href={`https://github.com/huggingface/chat-ui/commit/${publicConfig.PUBLIC_COMMIT_SHA}`}
-				target="_blank"
-				rel="noreferrer"
-				class="text-sm font-light text-gray-500 dark:text-gray-400"
-			>
-				Последнее развертывание <span class="gap-2 font-mono"
-					>{publicConfig.PUBLIC_COMMIT_SHA.slice(0, 7)}</span
-				>
-			</a>
 		</div>
 	{/if}
 	{#if page.data.isAdmin}
@@ -255,19 +238,6 @@
 
 		<div class="mt-6 flex flex-col gap-2 self-start text-[13px]">
 			{#if publicConfig.isHuggingChat}
-				<a
-					href="https://github.com/huggingface/chat-ui"
-					target="_blank"
-					class="flex items-center underline decoration-gray-300 underline-offset-2 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"
-					><CarbonLogoGithub class="mr-1.5 shrink-0 text-sm " /> Репозиторий Github</a
-				>
-				<a
-					href="https://huggingface.co/spaces/huggingchat/chat-ui/discussions/764"
-					target="_blank"
-					rel="noreferrer"
-					class="flex items-center underline decoration-gray-300 underline-offset-2 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"
-					><CarbonArrowUpRight class="mr-1.5 shrink-0 text-sm " /> Поделитесь отзывом о HuggingChat</a
-				>
 				<a
 					href="{base}/privacy"
 					class="flex items-center underline decoration-gray-300 underline-offset-2 hover:decoration-gray-700 dark:decoration-gray-700 dark:hover:decoration-gray-400"

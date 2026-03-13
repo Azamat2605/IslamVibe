@@ -3,17 +3,9 @@ import type { ChatTemplateInput } from "$lib/types/Template";
 import { z } from "zod";
 import endpoints, { endpointSchema, type Endpoint } from "./endpoints/endpoints";
 
-import JSON5 from "json5";
 import { logger } from "$lib/server/logger";
-import { makeRouterEndpoint } from "$lib/server/router/endpoint";
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
-
-const sanitizeJSONEnv = (val: string, fallback: string) => {
-	const raw = (val ?? "").trim();
-	const unquoted = raw.startsWith("`") && raw.endsWith("`") ? raw.slice(1, -1) : raw;
-	return unquoted || fallback;
-};
 
 const modelConfig = z.object({
 	/** Used as an identifier in DB */
@@ -66,43 +58,6 @@ const modelConfig = z.object({
 
 type ModelConfig = z.infer<typeof modelConfig>;
 
-const overrideEntrySchema = modelConfig
-	.partial()
-	.extend({
-		id: z.string().optional(),
-		name: z.string().optional(),
-	})
-	.refine((value) => Boolean((value.id ?? value.name)?.trim()), {
-		message: "Model override entry must provide an id or name",
-	});
-
-type ModelOverride = z.infer<typeof overrideEntrySchema>;
-
-const openaiBaseUrl = config.OPENAI_BASE_URL
-	? config.OPENAI_BASE_URL.replace(/\/$/, "")
-	: undefined;
-const isHFRouter = openaiBaseUrl === "https://router.huggingface.co/v1";
-
-const listSchema = z
-	.object({
-		data: z.array(
-			z.object({
-				id: z.string(),
-				description: z.string().optional(),
-				providers: z
-					.array(z.object({ supports_tools: z.boolean().optional() }).passthrough())
-					.optional(),
-				architecture: z
-					.object({
-						input_modalities: z.array(z.string()).optional(),
-					})
-					.passthrough()
-					.optional(),
-			})
-		),
-	})
-	.passthrough();
-
 function getChatPromptRender(_m: ModelConfig): (inputs: ChatTemplateInput) => string {
 	// Minimal template to support legacy "completions" flow if ever used.
 	// We avoid any tokenizer/Jinja usage in this build.
@@ -138,9 +93,11 @@ const addEndpoint = (m: Awaited<ReturnType<typeof processModel>>) => ({
 		if (endpoint.type === "openai") {
 			return await endpoints.openai({ ...endpoint, model: m });
 		} else if (endpoint.type === "dify") {
-			return await endpoints.dify({ ...endpoint, model: m });
+			return await endpoints.dify({ ...endpoint, _model: m });
 		} else {
-			throw new Error(`Unsupported endpoint type: ${(endpoint as any).type}`);
+			throw new Error(
+				`Unsupported endpoint type: ${(endpoint as unknown as { type: string }).type}`
+			);
 		}
 	},
 });
@@ -148,23 +105,6 @@ const addEndpoint = (m: Awaited<ReturnType<typeof processModel>>) => ({
 type InternalProcessedModel = Awaited<ReturnType<typeof addEndpoint>> & {
 	isRouter: boolean;
 	hasInferenceAPI: boolean;
-};
-
-const inferenceApiIds: string[] = [];
-
-const getModelOverrides = (): ModelOverride[] => {
-	const overridesEnv = (Reflect.get(config, "MODELS") as string | undefined) ?? "";
-
-	if (!overridesEnv.trim()) {
-		return [];
-	}
-
-	try {
-		return z.array(overrideEntrySchema).parse(JSON5.parse(sanitizeJSONEnv(overridesEnv, "[]")));
-	} catch (error) {
-		logger.error(error, "[models] Failed to parse MODELS overrides");
-		return [];
-	}
 };
 
 export type ModelsRefreshSummary = {
@@ -301,12 +241,27 @@ const buildModels = async (): Promise<ProcessedModel[]> => {
 	const modelRaw = {
 		id: "islamvibe-ai",
 		name: "IslamVibe AI",
-		displayName: "IslamVibe AI",
-		description: "Исламский AI ассистент на базе DeepSeek с RAG через Dify. Отвечает на вопросы об исламе, Коране, хадисах и исламской культуре.",
+		displayName: "IslamVibe AI - Исламский помощник",
+		description:
+			"Исламский AI ассистент на базе DeepSeek с RAG через Dify. Отвечает на вопросы об исламе, Коране, хадисах, фикхе, исламской истории и культуре. Поддерживает арабский и русский языки.",
 		logoUrl: "https://img.icons8.com/color/96/000000/islam.png",
 		websiteUrl: "https://islamvibe.ai",
 		modelUrl: "https://dify.ai",
-		preprompt: "Ты - полезный исламский AI ассистент. Отвечай на вопросы уважительно, точно и с ссылками на источники, когда это возможно. Если не знаешь ответа, честно признайся.",
+		preprompt: `You are IslamVibe AI, a knowledgeable and respectful Islamic assistant designed to provide accurate, well-sourced information about Islam. Your purpose is to help users with questions about Islamic teachings, Quranic tafsir, Islamic history, prayer guidance, fiqh, hadith sciences, and Islamic ethics.
+
+Core Principles:
+1. Respond with respect, accuracy, and proper references to sources (Quran, Sunnah, scholarly opinions)
+2. If you don't know the answer, honestly admit it and suggest consulting a knowledgeable scholar
+3. Provide Quranic verses in Arabic with transliteration and translation
+4. Mention surah and verse numbers for all Quranic references
+5. For hadith, cite the source (Bukhari, Muslim, etc.) and grading when possible
+6. When there are differences of opinion among madhabs, explain various viewpoints objectively
+7. Avoid giving fatwas without proper context; remind users to consult local imams for specific rulings
+8. Be patient, kind, and compassionate in all interactions
+9. Focus on educational guidance rather than personal religious rulings
+10. Promote understanding, tolerance, and the beautiful teachings of Islam
+
+Languages: Respond in the language of the user's question (English, Russian, or Arabic). Provide Arabic terms when relevant for clarity.`,
 		endpoints: [
 			{
 				type: "dify" as const,
@@ -314,8 +269,10 @@ const buildModels = async (): Promise<ProcessedModel[]> => {
 		],
 		parameters: {
 			temperature: 0.7,
-			max_tokens: 2000,
+			max_tokens: 3000,
 			top_p: 0.9,
+			presence_penalty: 0.1,
+			frequency_penalty: 0.1,
 		},
 		multimodal: false,
 		supportsTools: false,
@@ -323,16 +280,64 @@ const buildModels = async (): Promise<ProcessedModel[]> => {
 		systemRoleSupported: true,
 		promptExamples: [
 			{
-				title: "Объясни суру Аль-Фатиха",
-				prompt: "Объясни смысл и значение суры Аль-Фатиха из Корана.",
+				title: "Quranic Tafsir: Surah Al-Fatihah",
+				prompt:
+					"Explain the tafsir (interpretation) of Surah Al-Fatihah with references to classical commentators like Ibn Kathir, Al-Tabari, and Al-Qurtubi. Include the Arabic text with transliteration and translation.",
 			},
 			{
-				title: "Расскажи о пяти столпах ислама",
-				prompt: "Какие пять столпов ислама и что каждый из них означает?",
+				title: "Islamic History: Life of Prophet Muhammad",
+				prompt:
+					"Describe the key events in the life of Prophet Muhammad (PBUH) from birth to passing, highlighting lessons for contemporary Muslims.",
 			},
 			{
-				title: "Разница между сунной и хадисом",
-				prompt: "В чем разница между сунной и хадисом в исламе?",
+				title: "Prayer Guidance: Steps of Salah",
+				prompt:
+					"Guide me through the complete steps of performing Salah (prayer) correctly according to Sunni tradition, including prerequisites, intentions, and common mistakes to avoid.",
+			},
+			{
+				title: "Islamic Theology: Concept of Tawhid",
+				prompt:
+					"Explain the concept of Tawhid (monotheism) in Islam, its types (Tawhid al-Rububiyyah, Tawhid al-Uluhiyyah, Tawhid al-Asma' wa al-Sifat), and its importance.",
+			},
+			{
+				title: "Fiqh: Hajj Requirements",
+				prompt:
+					"What are the conditions, pillars (arkan), and obligatory acts (wajibat) of Hajj according to different madhabs (Hanafi, Shafi'i, Maliki, Hanbali)?",
+			},
+			{
+				title: "Five Pillars of Islam",
+				prompt:
+					"Discuss the significance and practical implementation of the Five Pillars of Islam: Shahadah, Salah, Zakat, Sawm, and Hajj.",
+			},
+			{
+				title: "Islamic Finance: Zakat vs Sadaqah",
+				prompt:
+					"Explain the difference between Zakat and Sadaqah in Islamic finance, including types, recipients, calculation methods, and contemporary applications.",
+			},
+			{
+				title: "Women's Rights in Islam",
+				prompt:
+					"What are the rights and responsibilities of women in Islam according to Quran and Sunnah? Address common misconceptions.",
+			},
+			{
+				title: "Islamic Ethics: Modern Dilemmas",
+				prompt:
+					"How should a Muslim respond to modern ethical dilemmas (bioethics, business ethics, social media) using Islamic principles from Quran and Hadith?",
+			},
+			{
+				title: "Hadith Sciences",
+				prompt:
+					"Explain the science of Hadith authentication (Mustalah al-Hadith), including classification by authenticity (sahih, hasan, da'if) and important collections.",
+			},
+			{
+				title: "Islamic Spirituality: Purification of Heart",
+				prompt:
+					"Discuss the concept of Tazkiyah al-Nafs (purification of the soul) in Islam and practical methods for spiritual development.",
+			},
+			{
+				title: "Interfaith Dialogue in Islam",
+				prompt:
+					"What is the Islamic perspective on interfaith dialogue and relations with People of the Book (Jews and Christians) based on Quranic verses and Prophetic examples?",
 			},
 		],
 	} as ModelConfig;

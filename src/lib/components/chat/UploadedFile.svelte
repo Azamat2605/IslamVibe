@@ -114,12 +114,12 @@
 								file.mime !== "application/vnd.chatui.clipboard"}>{result}</pre>
 					{/await}
 				{:else}
-					<pre
-						class="w-full whitespace-pre-wrap break-words pt-0 text-xs"
-						class:font-sans={file.mime === "text/plain" ||
-							file.mime === "application/vnd.chatui.clipboard"}
-						class:font-mono={file.mime !== "text/plain" &&
-							file.mime !== "application/vnd.chatui.clipboard"}>{atob(file.value)}</pre>
+						<pre
+							class="w-full whitespace-pre-wrap break-words pt-0 text-xs"
+							class:font-sans={file.mime === "text/plain" ||
+								file.mime === "application/vnd.chatui.clipboard"}
+							class:font-mono={file.mime !== "text/plain" &&
+								file.mime !== "application/vnd.chatui.clipboard"}>{atob(file.value)}</pre>
 				{/if}
 			</div>
 		{/if}
