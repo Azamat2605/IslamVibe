@@ -2,7 +2,6 @@
 	"nav": {
 		"newChat": "New chat",
 		"models": "Models",
-		"mcpServers": "MCP Servers",
 		"settings": "Settings",
 		"toggleTheme": "Toggle theme",
 		"getPro": "Get Pro",
@@ -10,7 +9,10 @@
 		"today": "Today",
 		"week": "This week",
 		"month": "This month",
-		"older": "Older"
+		"older": "Older",
+		"aboutProject": "About",
+		"telegram": "Telegram",
+		"help": "Help"
 	},
 	"user": {
 		"anonymous": "Anonymous"

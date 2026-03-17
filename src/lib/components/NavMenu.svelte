@@ -13,9 +13,13 @@
 	import Logo from "$lib/components/icons/Logo.svelte";
 	import IconSun from "$lib/components/icons/IconSun.svelte";
 	import IconMoon from "$lib/components/icons/IconMoon.svelte";
+	import IconInfo from "$lib/components/icons/IconInfo.svelte";
+	import IconTelegram from "$lib/components/icons/IconTelegram.svelte";
+	import IconHelp from "$lib/components/icons/IconHelp.svelte";
 	import { switchTheme, subscribeToTheme } from "$lib/switchTheme";
 	import { isAborted } from "$lib/stores/isAborted";
 	import { onDestroy } from "svelte";
+	import { translations, t } from "$lib/i18n";
 
 	import NavConversationItem from "./NavConversationItem.svelte";
 	import type { LayoutData } from "../../routes/$types";
@@ -28,10 +32,8 @@
 	import { usePublicConfig } from "$lib/utils/PublicConfig.svelte";
 	import { useAPIClient, handleResponse } from "$lib/APIClient";
 	import { requireAuthUser } from "$lib/utils/auth";
-	import { enabledServersCount } from "$lib/stores/mcpServers";
 	import { isPro } from "$lib/stores/isPro";
 	import IconPro from "$lib/components/icons/IconPro.svelte";
-	import MCPServerManager from "./mcp/MCPServerManager.svelte";
 
 	const publicConfig = usePublicConfig();
 	const client = useAPIClient();
@@ -116,7 +118,6 @@
 
 	let isDark = $state(false);
 	let unsubscribeTheme: (() => void) | undefined;
-	let showMcpModal = $state(false);
 
 	if (browser) {
 		unsubscribeTheme = subscribeToTheme(({ isDark: nextIsDark }) => {
@@ -171,11 +172,11 @@
 <div
 	class="flex touch-none flex-col gap-1 rounded-r-xl border border-l-0 border-gray-100 p-3 text-sm dark:border-transparent md:mt-3 md:bg-gradient-to-l md:from-gray-50 md:dark:from-gray-800/30"
 >
-	{#if user?.username || user?.email}
+	<!-- IslamVibe: User info block temporarily disabled - authentication not configured -->
+	<!-- {#if user?.username || user?.email}
 		<div
 			class="group flex h-9 items-center gap-1.5 rounded-lg pl-2.5 pr-2 hover:bg-gray-100 first:hover:bg-transparent dark:hover:bg-gray-700 first:dark:hover:bg-transparent"
 		>
-			<!-- IslamVibe: Using placeholder avatar instead of Hugging Face API -->
 			<div
 				class="size-3.5 rounded-full border bg-gradient-to-br from-emerald-500 to-teal-600 dark:border-white/40 flex items-center justify-center text-[8px] text-white font-bold"
 			>
@@ -186,7 +187,6 @@
 				>{user?.username || user?.email}</span
 			>
 
-			<!-- TODO: Integrate IslamVibe Pro subscription system -->
 			{#if $isPro === false}
 				<a
 					href="#"
@@ -204,7 +204,41 @@
 				</span>
 			{/if}
 		</div>
-	{/if}
+	{/if} -->
+
+	<!-- IslamVibe: Additional navigation links -->
+	<button
+		type="button"
+		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+	>
+		<IconInfo classNames="text-base" />
+		{t("nav.aboutProject", $translations)}
+	</button>
+	<a
+		href="https://t.me/islam_vibee"
+		target="_blank"
+		rel="noopener noreferrer"
+		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+	>
+		<IconTelegram classNames="text-base" />
+		{t("nav.telegram", $translations)}
+	</a>
+	<button
+		type="button"
+		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 cursor-pointer"
+		onclick={() => {
+			if (window.chaport) {
+				window.chaport.open();
+			}
+		}}
+	>
+		<IconHelp classNames="text-base" />
+		{t("nav.help", $translations)}
+	</button>
+
+	<!-- Separator between info links and system settings -->
+	<div class="my-2 border-t border-gray-200 dark:border-gray-700"></div>
+
 	<a
 		href="{base}/models"
 		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -217,21 +251,6 @@
 		>
 	</a>
 
-	{#if user?.username || user?.email}
-		<button
-			onclick={() => (showMcpModal = true)}
-			class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-		>
-			Серверы MCP
-			{#if $enabledServersCount > 0}
-				<span
-					class="ml-auto rounded-md bg-blue-600/10 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-600/20 dark:text-blue-400"
-				>
-					{$enabledServersCount}
-				</span>
-			{/if}
-		</button>
-	{/if}
 
 	<span class="flex gap-1">
 		<a
@@ -257,8 +276,5 @@
 			{/if}
 		</button>
 	</span>
-</div>
 
-{#if showMcpModal}
-	<MCPServerManager onclose={() => (showMcpModal = false)} />
-{/if}
+</div>

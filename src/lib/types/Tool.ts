@@ -38,37 +38,3 @@ export interface ToolFront {
 	mimeTypes?: string[];
 	timeToUseMS?: number;
 }
-
-// MCP Server types
-export interface KeyValuePair {
-	key: string;
-	value: string;
-}
-
-export type ServerStatus = "connected" | "connecting" | "disconnected" | "error";
-
-export interface MCPTool {
-	name: string;
-	description?: string;
-	inputSchema?: unknown;
-}
-
-export interface MCPServer {
-	id: string;
-	name: string;
-	url: string;
-	type: "base" | "custom";
-	headers?: KeyValuePair[];
-	env?: KeyValuePair[];
-	status?: ServerStatus;
-	isLocked?: boolean;
-	tools?: MCPTool[];
-	errorMessage?: string;
-	// Indicates server reports or appears to require OAuth or other auth
-	authRequired?: boolean;
-}
-
-export interface MCPServerApi {
-	url: string;
-	headers?: KeyValuePair[];
-}

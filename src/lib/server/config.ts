@@ -157,9 +157,6 @@ type ExtraConfigKeys =
 	| "ENABLE_ASSISTANTS"
 	| "METRICS_ENABLED"
 	| "METRICS_PORT"
-	| "MCP_SERVERS"
-	| "MCP_FORWARD_HF_USER_TOKEN"
-	| "MCP_TOOL_TIMEOUT_MS"
 	| "EXA_API_KEY";
 
 type ConfigProxy = ConfigManager & { [K in ConfigKey | ExtraConfigKeys]: string };

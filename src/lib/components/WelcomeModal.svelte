@@ -24,11 +24,6 @@
 				src="{publicConfig.assetPath}/omni-welcome.gif"
 				alt="IslamVibe AI animation"
 			/>
-			<div
-				class="absolute bottom-3 right-3 rounded-lg border border-emerald-500/20 bg-emerald-500/20 px-2 py-0.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400"
-			>
-				С поддержкой MCP!
-			</div>
 		</div>
 
 		<div class="text-gray-700 dark:text-gray-200">

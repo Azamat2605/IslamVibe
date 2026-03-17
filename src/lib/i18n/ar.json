@@ -2,7 +2,6 @@
 	"nav": {
 		"newChat": "محادثة جديدة",
 		"models": "النماذج",
-		"mcpServers": "خوادم MCP",
 		"settings": "الإعدادات",
 		"toggleTheme": "تبديل السمة",
 		"getPro": "احصل على Pro",
@@ -10,7 +9,10 @@
 		"today": "اليوم",
 		"week": "هذا الأسبوع",
 		"month": "هذا الشهر",
-		"older": "أقدم"
+		"older": "أقدم",
+		"aboutProject": "حول المشروع",
+		"telegram": "تيليجرام",
+		"help": "مساعدة"
 	},
 	"user": {
 		"anonymous": "مجهول"

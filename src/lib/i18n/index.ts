@@ -18,6 +18,9 @@ export type Translations = {
 		week: string;
 		month: string;
 		older: string;
+		aboutProject: string;
+		telegram: string;
+		help: string;
 	};
 	user: {
 		anonymous: string;

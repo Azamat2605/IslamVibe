@@ -3,7 +3,6 @@ import { logger } from "$lib/server/logger";
 import { initExitHandler } from "$lib/server/exitHandler";
 import { checkAndRunMigrations } from "$lib/migrations/migrations";
 import { refreshConversationStats } from "$lib/jobs/refresh-conversation-stats";
-import { loadMcpServersOnStartup } from "$lib/server/mcp/registry";
 import { AbortedGenerations } from "$lib/server/abortedGenerations";
 import { adminTokenManager } from "$lib/server/adminToken";
 import { MetricsServer } from "$lib/server/metrics";
@@ -34,9 +33,6 @@ export async function initServer(): Promise<void> {
 
 	checkAndRunMigrations();
 	refreshConversationStats();
-
-	// Load MCP servers at startup
-	loadMcpServersOnStartup();
 
 	// Init AbortedGenerations refresh process
 	AbortedGenerations.getInstance();
