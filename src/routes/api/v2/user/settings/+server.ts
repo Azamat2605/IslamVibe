@@ -25,6 +25,10 @@ const settingsSchema = z.object({
 });
 
 export const GET: RequestHandler = async ({ locals }) => {
+	console.log("⚙️ [SETTINGS] Request received");
+	console.log("⚙️ [SETTINGS] User:", locals.user?.email || "null");
+	console.log("⚙️ [SETTINGS] Session ID:", locals.sessionId?.substring(0, 10) + "..." || "null");
+
 	requireAuth(locals);
 	const settings = await collections.settings.findOne(authCondition(locals));
 

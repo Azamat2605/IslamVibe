@@ -20,7 +20,7 @@ superjson.registerCustom<ObjectId, string>(
 
 type FetchFn = typeof globalThis.fetch;
 
-interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = unknown> {
 	data: T | null;
 	error: unknown;
 	status: number;
@@ -42,7 +42,10 @@ async function apiCall<T = unknown>(
 		}
 	}
 
-	const init: RequestInit = { method };
+	const init: RequestInit = {
+		method,
+		credentials: "include", // Важно: отправляем куки с каждым запросом
+	};
 	if (body !== undefined && body !== null) {
 		init.headers = { "Content-Type": "application/json" };
 		init.body = JSON.stringify(body);

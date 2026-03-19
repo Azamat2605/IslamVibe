@@ -138,17 +138,13 @@
 			Новый чат
 		</button>
 
-		{#if model.modelUrl}
-			<a
-				href={model.modelUrl || "https://huggingface.co/" + model.name}
-				target="_blank"
-				rel="noreferrer"
-				class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
-			>
-				<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs " />
-				Страница модели
-			</a>
-		{/if}
+		<a
+			href="/about"
+			class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
+		>
+			<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs " />
+			О модели
+		</a>
 
 		{#if model.datasetName || model.datasetUrl}
 			<a
@@ -162,17 +158,6 @@
 			</a>
 		{/if}
 
-		{#if model.websiteUrl}
-			<a
-				href={model.websiteUrl}
-				target="_blank"
-				class="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/60"
-				rel="noreferrer"
-			>
-				<CarbonArrowUpRight class="mr-1.5 shrink-0 text-xs " />
-				Веб-сайт модели
-			</a>
-		{/if}
 
 		{#if publicConfig.isHuggingChat}
 			{#if !model?.isRouter}

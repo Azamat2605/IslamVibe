@@ -4,9 +4,20 @@ import { error } from "@sveltejs/kit";
  * Throws 401 if neither a user._id nor sessionId is present in locals.
  */
 export function requireAuth(locals: App.Locals): void {
-	if (!locals.user?._id && !locals.sessionId) {
-		error(401, "Must have a valid session or user");
+	console.log("🔐 [REQUIRE_AUTH] Checking auth:", {
+		hasUser: !!locals.user,
+		userId: locals.user?._id?.toString(),
+		hasSessionId: !!locals.sessionId,
+		sessionId: locals.sessionId?.substring(0, 10) + "...",
+	});
+
+	// Для protected endpoints требуется пользователь, а не просто сессия
+	if (!locals.user?._id) {
+		console.log("🚨 [REQUIRE_AUTH] No user._id, throwing 401");
+		error(401, "Must have a valid user");
 	}
+
+	console.log("✅ [REQUIRE_AUTH] Auth passed");
 }
 
 /**

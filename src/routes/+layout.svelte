@@ -14,18 +14,20 @@
 	import NavMenu from "$lib/components/NavMenu.svelte";
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import titleUpdate from "$lib/stores/titleUpdate";
-	import WelcomeModal from "$lib/components/WelcomeModal.svelte";
-	import ExpandNavigation from "$lib/components/ExpandNavigation.svelte";
-	import { setContext } from "svelte";
-	import { handleResponse, useAPIClient } from "$lib/APIClient";
-	import { isAborted } from "$lib/stores/isAborted";
-	import { isPro } from "$lib/stores/isPro";
-	import IconShare from "$lib/components/icons/IconShare.svelte";
-	import { shareModal } from "$lib/stores/shareModal";
-	import BackgroundGenerationPoller from "$lib/components/BackgroundGenerationPoller.svelte";
-	import { requireAuthUser } from "$lib/utils/auth";
-	import { initI18n } from "$lib/i18n";
-	import { initRTL } from "$lib/utils/rtl";
+import WelcomeModal from "$lib/components/WelcomeModal.svelte";
+import ExpandNavigation from "$lib/components/ExpandNavigation.svelte";
+import { setContext } from "svelte";
+import { handleResponse, useAPIClient } from "$lib/APIClient";
+import { isAborted } from "$lib/stores/isAborted";
+import { isPro } from "$lib/stores/isPro";
+import IconShare from "$lib/components/icons/IconShare.svelte";
+import { shareModal } from "$lib/stores/shareModal";
+import BackgroundGenerationPoller from "$lib/components/BackgroundGenerationPoller.svelte";
+import { requireAuthUser } from "$lib/utils/auth";
+import { initI18n } from "$lib/i18n";
+import { initRTL } from "$lib/utils/rtl";
+import LoginModal from "$lib/components/auth/LoginModal.svelte";
+import { loginModalOpen } from "$lib/stores/loginModal";
 
 	let { data = $bindable(), children } = $props();
 
@@ -43,6 +45,10 @@
 
 	let errorToastTimeout: ReturnType<typeof setTimeout>;
 	let currentError: string | undefined = $state();
+	
+	// Состояние для toast-уведомлений успеха
+	let successToastTimeout: ReturnType<typeof setTimeout>;
+	let currentSuccess: string | undefined = $state();
 
 	async function onError() {
 		// If a new different error comes, wait for the current error to hide first
@@ -58,6 +64,26 @@
 			$error = undefined;
 			currentError = undefined;
 		}, 5000);
+	}
+	
+	// Функция для показа toast-уведомлений успеха
+	function showSuccessToast(message: string) {
+		// Если уже есть успешное уведомление, скрываем его перед показом нового
+		if (currentSuccess) {
+			clearTimeout(successToastTimeout);
+			currentSuccess = undefined;
+			setTimeout(() => {
+				currentSuccess = message;
+				successToastTimeout = setTimeout(() => {
+					currentSuccess = undefined;
+				}, 3000);
+			}, 300);
+		} else {
+			currentSuccess = message;
+			successToastTimeout = setTimeout(() => {
+				currentSuccess = undefined;
+			}, 3000);
+		}
 	}
 
 	let canShare = $derived(
@@ -99,12 +125,19 @@
 	}
 
 	function closeWelcomeModal() {
-		if (requireAuthUser()) return;
-		settings.set({ welcomeModalSeen: true });
+		// Немедленно обновляем локальное состояние
+		settings.instantSet({ welcomeModalSeen: true });
+		// Также сохраняем в localStorage для анонимных пользователей
+		if (typeof localStorage !== 'undefined') {
+			localStorage.setItem('welcomeModalSeen', 'true');
+			// Также сохраняем временную метку
+			localStorage.setItem('welcomeModalSeenAt', new Date().toISOString());
+		}
 	}
 
 	onDestroy(() => {
 		clearTimeout(errorToastTimeout);
+		clearTimeout(successToastTimeout);
 	});
 
 	$effect(() => {
@@ -185,8 +218,51 @@
 		};
 
 		window.addEventListener("keydown", onKeydown, { capture: true });
+		
+		// Обработчик события show-toast из компонентов (например, LoginModal)
+		function handleShowToast(event: CustomEvent<{ message: string }>) {
+			showSuccessToast(event.detail.message);
+		}
+		
+		// Обработчик события успешной аутентификации
+		function handleAuthSuccess() {
+			console.log('Auth success event received, invalidating user data...');
+			// Инвалидируем данные пользователя для обновления
+			// @ts-ignore
+			if (window.__SVELTEKIT_APP__) {
+				// @ts-ignore
+				window.__SVELTEKIT_APP__.invalidate('app:user');
+			}
+			// Также инвалидируем все данные для полного обновления
+			// @ts-ignore
+			if (window.__SVELTEKIT_APP__) {
+				// @ts-ignore
+				window.__SVELTEKIT_APP__.invalidateAll();
+			}
+		}
+		
+		// Обработчик события обновления пользователя (временный фикс)
+		function handleUserUpdated() {
+			console.log('User updated event received, invalidating all data...');
+			// Инвалидируем все данные для полного обновления
+			// @ts-ignore
+			if (window.__SVELTEKIT_APP__) {
+				// @ts-ignore
+				window.__SVELTEKIT_APP__.invalidateAll();
+			}
+			// Убрали вызов goto, чтобы избежать дублирования сессий
+			// goto(page.url.pathname, { invalidateAll: true });
+		}
+		
+		window.addEventListener("show-toast", handleShowToast as EventListener);
+		window.addEventListener("auth-success", handleAuthSuccess);
+		window.addEventListener("user-updated", handleUserUpdated);
+		
 		onDestroy(() => {
 			window.removeEventListener("keydown", onKeydown, { capture: true });
+			window.removeEventListener("show-toast", handleShowToast as EventListener);
+			window.removeEventListener("auth-success", handleAuthSuccess);
+			window.removeEventListener("user-updated", handleUserUpdated);
 			cleanupRTL();
 		});
 	});
@@ -200,7 +276,8 @@
 	// Show the welcome modal once on first app load
 	let showWelcome = $derived(
 		!$settings.welcomeModalSeen &&
-			!(page.data.shared === true && page.route.id?.startsWith("/conversation/"))
+			!(page.data.shared === true && page.route.id?.startsWith("/conversation/")) &&
+			!(typeof localStorage !== 'undefined' && localStorage.getItem('welcomeModalSeen') === 'true')
 	);
 </script>
 
@@ -264,6 +341,10 @@
 
 <BackgroundGenerationPoller />
 
+{#if $loginModalOpen}
+	<LoginModal onclose={() => loginModalOpen.set(false)} />
+{/if}
+
 <div
 	class="fixed grid h-dvh w-screen grid-cols-1 grid-rows-[auto,1fr] overflow-hidden text-smd {!isNavCollapsed
 		? 'md:grid-cols-[290px,1fr]'
@@ -310,6 +391,9 @@
 	</nav>
 	{#if currentError}
 		<Toast message={currentError} />
+	{/if}
+	{#if currentSuccess}
+		<Toast message={currentSuccess} />
 	{/if}
 	{@render children?.()}
 

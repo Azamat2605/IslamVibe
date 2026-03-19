@@ -18,6 +18,34 @@ import { config, ready } from "$lib/server/config";
 
 type HandleInput = Parameters<Handle>[0];
 
+// Define public routes that don't require authentication
+const PUBLIC_ROUTES = [
+	`${base}/`,
+	`${base}/login`,
+	`${base}/login/callback`,
+	`${base}/healthcheck`,
+	`${base}/r/`,
+	`${base}/conversation/`,
+	`${base}/models/`,
+	`${base}/register`,
+	`${base}/logout`,
+	`${base}/privacy`,
+	`${base}/metrics`,
+	`${base}/__debug/`,
+	`${base}/.well-known/`,
+	// API v2 public endpoints (explicitly listed)
+	`${base}/api/v2/auth/register`,
+	`${base}/api/v2/auth/login`,
+	`${base}/api/v2/auth/logout`,
+	`${base}/api/v2/public-config`,
+	`${base}/api/v2/feature-flags`,
+	`${base}/api/v2/models`,
+];
+
+function isPublicRoute(pathname: string): boolean {
+	return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+}
+
 function getClientAddressSafe(event: RequestEvent): string | undefined {
 	try {
 		return event.getClientAddress();
@@ -36,6 +64,12 @@ export async function handleRequest({ event, resolve }: HandleInput): Promise<Re
 			await ready.then(() => {
 				config.checkForUpdates();
 			});
+
+			// 🍪 [HOOKS] Логирование кук и запроса
+			const cookieHeader = event.request.headers.get("cookie");
+			console.log("🍪 [HOOKS] Cookie received:", cookieHeader?.substring(0, 100));
+			console.log("👤 [HOOKS] Request to:", event.url.pathname, "method:", event.request.method);
+			console.log("👤 [HOOKS] Full URL:", event.url.toString());
 
 			logger.debug(
 				{
@@ -75,6 +109,12 @@ export async function handleRequest({ event, resolve }: HandleInput): Promise<Re
 			}
 
 			const isApi = event.url.pathname.startsWith(`${base}/api/`);
+			console.log(
+				"🔐 [HOOKS] Calling authenticateRequest for path:",
+				event.url.pathname,
+				"isApi:",
+				isApi
+			);
 			const auth = await authenticateRequest(
 				event.request.headers,
 				event.cookies,
@@ -82,40 +122,28 @@ export async function handleRequest({ event, resolve }: HandleInput): Promise<Re
 				isApi
 			);
 
+			console.log("👤 [HOOKS] Auth result:", {
+				hasUser: !!auth.user,
+				userEmail: auth.user?.email,
+				sessionId: auth.sessionId?.substring(0, 10) + "...",
+				secretSessionId: auth.secretSessionId?.substring(0, 10) + "...",
+			});
+
 			event.locals.sessionId = auth.sessionId;
 
-			if (loginEnabled && !auth.user && !event.url.pathname.startsWith(`${base}/.well-known/`)) {
-				if (config.AUTOMATIC_LOGIN === "true") {
-					// AUTOMATIC_LOGIN: always redirect to OAuth flow (unless already on login or healthcheck pages)
-					if (
-						!event.url.pathname.startsWith(`${base}/login`) &&
-						!event.url.pathname.startsWith(`${base}/healthcheck`)
-					) {
-						// To get the same CSRF token after callback
-						refreshSessionCookie(event.cookies, auth.secretSessionId);
-						return await triggerOauthFlow(event);
-					}
-				} else {
-					// Redirect to OAuth flow unless on the authorized pages (home, shared conversation, login, healthcheck, model thumbnails)
-					if (
-						event.url.pathname !== `${base}/` &&
-						event.url.pathname !== `${base}` &&
-						!event.url.pathname.startsWith(`${base}/login`) &&
-						!event.url.pathname.startsWith(`${base}/login/callback`) &&
-						!event.url.pathname.startsWith(`${base}/healthcheck`) &&
-						!event.url.pathname.startsWith(`${base}/r/`) &&
-						!event.url.pathname.startsWith(`${base}/conversation/`) &&
-						!event.url.pathname.startsWith(`${base}/models/`) &&
-						!event.url.pathname.startsWith(`${base}/api`)
-					) {
-						refreshSessionCookie(event.cookies, auth.secretSessionId);
-						return triggerOauthFlow(event);
-					}
-				}
+			// Check if authentication is required for this route
+			if (loginEnabled && !auth.user && !isPublicRoute(event.url.pathname)) {
+				// User is not authenticated and trying to access a protected route
+				console.log("🚨 [HOOKS] User not authenticated for protected route, triggering OAuth flow");
+				refreshSessionCookie(event.cookies, auth.secretSessionId);
+				return await triggerOauthFlow(event);
 			}
 
 			event.locals.user = auth.user || undefined;
 			event.locals.token = auth.token;
+
+			console.log("👤 [HOOKS] User loaded:", event.locals.user?.email || "null");
+			console.log("👤 [HOOKS] Session ID:", event.locals.sessionId?.substring(0, 10) + "...");
 
 			// Update request context with user after authentication
 			if (auth.user?.username) {
@@ -159,6 +187,10 @@ export async function handleRequest({ event, resolve }: HandleInput): Promise<Re
 				event.url.pathname.startsWith(`${base}/login/callback`)
 			) {
 				// if the request is a POST request or login-related we refresh the cookie
+				console.log(
+					"🍪 [HOOKS] Refreshing cookie for POST/login request, secretSessionId:",
+					auth.secretSessionId?.substring(0, 10) + "..."
+				);
 				refreshSessionCookie(event.cookies, auth.secretSessionId);
 
 				await collections.sessions.updateOne(
@@ -167,12 +199,11 @@ export async function handleRequest({ event, resolve }: HandleInput): Promise<Re
 				);
 			}
 
+			// Additional check for non-GET requests on protected routes
 			if (
 				loginEnabled &&
 				!event.locals.user &&
-				!event.url.pathname.startsWith(`${base}/login`) &&
-				!event.url.pathname.startsWith(`${base}/admin`) &&
-				!event.url.pathname.startsWith(`${base}/settings`) &&
+				!isPublicRoute(event.url.pathname) &&
 				!["GET", "OPTIONS", "HEAD"].includes(event.request.method)
 			) {
 				return errorResponse(401, ERROR_MESSAGES.authOnly);

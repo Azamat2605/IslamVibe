@@ -1,22 +1,17 @@
-// import { goto } from "$app/navigation";  // временно закомментировано для фиксации ESLint
-// import { base } from "$app/paths";       // временно закомментировано для фиксации ESLint
-// import { page } from "$app/state";       // временно закомментировано для фиксации ESLint
+import { page } from "$app/state";
+import { loginModalOpen } from "$lib/stores/loginModal";
 
 /**
  * Redirects to the login page if the user is not authenticated
  * and the login feature is enabled.
- *
- * IslamVibe: Authentication temporarily disabled - always returns false
- * to allow all navigation without requiring login.
+ * If on client side, opens the login modal instead of redirecting.
  */
 export function requireAuthUser(): boolean {
-	// IslamVibe: Temporarily disabled authentication check
-	// Original logic:
-	// if (page.data.loginEnabled && !page.data.user) {
-	// 	const next = page.url.pathname + page.url.search;
-	// 	const url = `${base}/login?next=${encodeURIComponent(next)}`;
-	// 	goto(url, { invalidateAll: true });
-	// 	return true;
-	// }
+	// Check if user exists in page data
+	if (!page.data.user) {
+		// Open login modal instead of redirecting
+		loginModalOpen.set(true);
+		return true;
+	}
 	return false;
 }

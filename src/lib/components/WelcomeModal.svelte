@@ -39,7 +39,8 @@
 		</div>
 
 		<button
-			class="w-full rounded-xl bg-emerald-600 px-5 py-2.5 text-base font-medium text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+			type="button"
+			class="w-full cursor-pointer rounded-xl bg-emerald-600 px-5 py-2.5 text-base font-medium text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
 			onclick={close}
 		>
 			Начать общение

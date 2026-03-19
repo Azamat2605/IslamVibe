@@ -81,6 +81,7 @@ function sanitizeReturnPath(path: string | undefined | null): string | undefined
 }
 
 export function refreshSessionCookie(cookies: Cookies, sessionId: string) {
+	console.log("🔐 [SESSION] Creating cookie for sessionId:", sessionId.substring(0, 10) + "...");
 	cookies.set(config.COOKIE_NAME, sessionId, {
 		path: "/",
 		// So that it works inside the space's iframe
@@ -100,13 +101,18 @@ export async function findUser(
 	invalidateSession: boolean;
 	oauth?: Session["oauth"];
 }> {
+	console.log("🔐 [SESSION] Looking for session:", sessionId.substring(0, 10) + "...");
 	const session = await collections.sessions.findOne({ sessionId });
 
 	if (!session) {
+		console.log("🔐 [SESSION] Session not found in DB");
 		return { user: null, invalidateSession: false };
 	}
 
+	console.log("🔐 [SESSION] Session found, userId:", session.userId?.toString());
+
 	if (coupledCookieHash && session.coupledCookieHash !== coupledCookieHash) {
+		console.log("🔐 [SESSION] coupledCookieHash mismatch, invalidating session");
 		return { user: null, invalidateSession: true };
 	}
 
@@ -178,8 +184,11 @@ export async function findUser(
 		}
 	}
 
+	const user = await collections.users.findOne({ _id: session.userId });
+	console.log("🔐 [SESSION] User found:", user?.email || "null");
+
 	return {
-		user: await collections.users.findOne({ _id: session.userId }),
+		user,
 		invalidateSession: false,
 		oauth: session.oauth,
 	};
@@ -239,7 +248,17 @@ export async function generateCsrfToken(
 
 let lastIssuer: Issuer<BaseClient> | null = null;
 let lastIssuerFetchedAt: Date | null = null;
-async function getOIDCClient(settings: OIDCSettings, url: URL): Promise<BaseClient> {
+async function getOIDCClient(settings: OIDCSettings, url: URL): Promise<BaseClient | null> {
+	// Отключаем OpenID, если нет реальной конфигурации
+	if (
+		!OIDConfig.CLIENT_ID ||
+		!OIDConfig.CLIENT_SECRET ||
+		!OIDConfig.PROVIDER_URL ||
+		OIDConfig.CLIENT_ID === "dummy"
+	) {
+		return null;
+	}
+
 	if (
 		lastIssuer &&
 		lastIssuerFetchedAt &&
@@ -286,6 +305,9 @@ export async function getOIDCAuthorizationUrl(
 	params: { sessionId: string; next?: string; url: URL; cookies: Cookies }
 ): Promise<string> {
 	const client = await getOIDCClient(settings, params.url);
+	if (!client) {
+		throw new Error("OpenID client is not configured");
+	}
 	const csrfToken = await generateCsrfToken(
 		params.sessionId,
 		settings.redirectURI,
@@ -320,6 +342,9 @@ export async function getOIDCUserData(
 	url: URL
 ): Promise<OIDCUserInfo> {
 	const client = await getOIDCClient(settings, url);
+	if (!client) {
+		throw new Error("OpenID client is not configured");
+	}
 	const token = await client.callback(
 		settings.redirectURI,
 		{
@@ -342,6 +367,9 @@ export async function refreshOAuthToken(
 	url: URL
 ): Promise<TokenSet | null> {
 	const client = await getOIDCClient(settings, url);
+	if (!client) {
+		return null;
+	}
 	const tokenSet = await client.refresh(refreshToken);
 	return tokenSet;
 }
@@ -402,6 +430,7 @@ export async function authenticateRequest(
 	isApi?: boolean
 ): Promise<App.Locals & { secretSessionId: string }> {
 	const token = cookie.get(config.COOKIE_NAME);
+	console.log("🔐 [AUTH] Cookie token:", token ? token.substring(0, 10) + "..." : "null");
 
 	let email = null;
 	if (config.TRUSTED_EMAIL_HEADER) {
@@ -432,12 +461,15 @@ export async function authenticateRequest(
 	if (token) {
 		secretSessionId = token;
 		sessionId = await sha256(token);
+		console.log("🔐 [AUTH] SessionId (hashed):", sessionId.substring(0, 10) + "...");
 
 		const result = await findUser(sessionId, await getCoupledCookieHash(cookie), url);
 
 		if (result.invalidateSession) {
+			console.log("🔐 [AUTH] Session invalidated, creating new session");
 			secretSessionId = crypto.randomUUID();
 			sessionId = await sha256(secretSessionId);
+			console.log("🔐 [AUTH] New secretSessionId:", secretSessionId.substring(0, 10) + "...");
 
 			if (await collections.sessions.findOne({ sessionId })) {
 				throw new Error("Session ID collision");
@@ -545,10 +577,19 @@ export async function triggerOauthFlow({ url, locals, cookies }: RequestEvent): 
 		next = sanitizeReturnPath(`${base}/`) ?? "/";
 	}
 
-	const authorizationUrl = await getOIDCAuthorizationUrl(
-		{ redirectURI },
-		{ sessionId: locals.sessionId, next, url, cookies }
-	);
-
-	throw redirect(302, authorizationUrl);
+	try {
+		const authorizationUrl = await getOIDCAuthorizationUrl(
+			{ redirectURI },
+			{ sessionId: locals.sessionId, next, url, cookies }
+		);
+		throw redirect(302, authorizationUrl);
+	} catch (error) {
+		// Если OpenID не настроен, перенаправляем на страницу /login, которая откроет модалку
+		if (error instanceof Error && error.message === "OpenID client is not configured") {
+			// Redirect to /login page which will open the modal
+			const loginUrl = `${base}/login?next=${encodeURIComponent(next || `${base}/`)}`;
+			throw redirect(302, loginUrl);
+		}
+		throw error;
+	}
 }

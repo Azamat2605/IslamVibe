@@ -19,7 +19,7 @@
 	import { switchTheme, subscribeToTheme } from "$lib/switchTheme";
 	import { isAborted } from "$lib/stores/isAborted";
 	import { onDestroy } from "svelte";
-	import { translations, t } from "$lib/i18n";
+	import { translations, t, type Translations } from "$lib/i18n";
 
 	import NavConversationItem from "./NavConversationItem.svelte";
 	import type { LayoutData } from "../../routes/$types";
@@ -34,6 +34,8 @@
 	import { requireAuthUser } from "$lib/utils/auth";
 	import { isPro } from "$lib/stores/isPro";
 	import IconPro from "$lib/components/icons/IconPro.svelte";
+	import { loginModalOpen } from "$lib/stores/loginModal";
+	import { goto } from "$app/navigation";
 
 	const publicConfig = usePublicConfig();
 	const client = useAPIClient();
@@ -53,6 +55,11 @@
 		ondeleteConversation,
 		oneditConversationTitle,
 	}: Props = $props();
+
+	// Логирование изменений пользователя для отладки
+	$effect(() => {
+		console.log('NavMenu user changed:', user);
+	});
 
 	let hasMore = $state(true);
 
@@ -128,6 +135,27 @@
 	onDestroy(() => {
 		unsubscribeTheme?.();
 	});
+
+	function openLoginModal() {
+		loginModalOpen.set(true);
+	}
+
+	function closeLoginModal() {
+		loginModalOpen.set(false);
+	}
+
+	async function handleLogout() {
+		try {
+			await fetch('/logout', { 
+				method: 'POST',
+				credentials: 'include' // важно для кук
+			});
+			// После успеха — перезагрузить страницу для обновления состояния
+			window.location.reload();
+		} catch (e) {
+			console.error('Logout failed:', e);
+		}
+	}
 </script>
 
 <div
@@ -172,8 +200,32 @@
 <div
 	class="flex touch-none flex-col gap-1 rounded-r-xl border border-l-0 border-gray-100 p-3 text-sm dark:border-transparent md:mt-3 md:bg-gradient-to-l md:from-gray-50 md:dark:from-gray-800/30"
 >
-	<!-- IslamVibe: User info block temporarily disabled - authentication not configured -->
-	<!-- {#if user?.username || user?.email}
+
+	<!-- IslamVibe: Additional navigation links -->
+	{#if !user}
+	<button
+		type="button"
+		onclick={openLoginModal}
+		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+	>
+			<svg
+				class="text-base"
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+				<polyline points="10 17 15 12 10 7" />
+				<line x1="15" y1="12" x2="3" y2="12" />
+			</svg>
+			Вход / Регистрация
+		</button>
+	{:else}
 		<div
 			class="group flex h-9 items-center gap-1.5 rounded-lg pl-2.5 pr-2 hover:bg-gray-100 first:hover:bg-transparent dark:hover:bg-gray-700 first:dark:hover:bg-transparent"
 		>
@@ -204,16 +256,39 @@
 				</span>
 			{/if}
 		</div>
-	{/if} -->
+		
+		<!-- Кнопка выхода -->
+		<button
+			type="button"
+			onclick={handleLogout}
+			class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+		>
+			<svg
+				class="text-base"
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+				<polyline points="16 17 21 12 16 7" />
+				<line x1="21" y1="12" x2="9" y2="12" />
+			</svg>
+			Выход
+		</button>
+	{/if}
 
-	<!-- IslamVibe: Additional navigation links -->
-	<button
-		type="button"
+	<a
+		href="{base}/about"
 		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 	>
 		<IconInfo classNames="text-base" />
-		{t("nav.aboutProject", $translations)}
-	</button>
+		{t("nav.aboutProject", $translations as Translations)}
+	</a>
 	<a
 		href="https://t.me/islam_vibee"
 		target="_blank"
@@ -221,7 +296,7 @@
 		class="flex h-9 flex-none items-center gap-1.5 rounded-lg pl-2.5 pr-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
 	>
 		<IconTelegram classNames="text-base" />
-		{t("nav.telegram", $translations)}
+		{t("nav.telegram", $translations as Translations)}
 	</a>
 	<button
 		type="button"
@@ -233,7 +308,7 @@
 		}}
 	>
 		<IconHelp classNames="text-base" />
-		{t("nav.help", $translations)}
+		{t("nav.help", $translations as Translations)}
 	</button>
 
 	<!-- Separator between info links and system settings -->
